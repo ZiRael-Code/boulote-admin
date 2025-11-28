@@ -1,36 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Boulote Admin Dashboard
 
-## Getting Started
+Admin dashboard for managing the Boulote platform - connecting companies with top professionals.
 
-First, run the development server:
+## 🚀 Setup
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
 
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the admin dashboard.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📦 Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Next.js** 15.5.4 - React framework with App Router
+- **React** 19.1.0 - UI library
+- **TypeScript** 5.x - Type safety
+- **Tailwind CSS** 4.x - Styling
+- **Zustand** 5.0.8 - State management
+- **React Query** 5.x - Server state management
+- **Axios** 1.12.2 - HTTP client
+- **React Hook Form** 7.x - Form handling
+- **Zod** 4.x - Schema validation
+- **Lucide React** - Icons
+- **React Hot Toast** - Notifications
 
-## Learn More
+## 📁 Folder Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+app/
+  ├── auth/           # Authentication pages
+  │   └── login/      # Admin login
+  ├── dashboard/      # Main dashboard
+  ├── layout.tsx      # Root layout
+  ├── page.tsx        # Home page (redirects)
+  ├── providers.tsx   # React Query provider
+  └── globals.css     # Global styles & design tokens
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+components/
+  └── ui/             # Reusable UI components
+      ├── button/     # Button component
+      └── input/      # Input components
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+lib/
+  ├── api/            # API configuration
+  │   └── axios-config.ts
+  ├── store/          # Zustand stores
+  │   └── auth-store.ts
+  ├── utils/          # Utility functions
+  │   └── cn.ts       # Class name merger
+  ├── validations/    # Zod schemas
+  └── types/          # TypeScript types
+```
 
-## Deploy on Vercel
+## 🎨 Design System
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The admin dashboard uses the same design system as the main Boulote platform:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Primary Blue**: `primary-500` (#0070C4)
+- **Success Green**: `success-500` (#00AF50)
+- **Text**: `secondary-500` (#1A1A1A)
+- **Neutral**: `neutral-500` (#6B6B6B)
+- **Border**: `border-500` (#E5E5E5)
+
+## 🔧 Available Scripts
+
+```bash
+# Development
+npm run dev          # Start dev server with Turbopack
+
+# Production
+npm run build        # Build for production
+npm run start        # Start production server
+
+# Code Quality
+npm run lint         # Run ESLint
+```
+
+## 🔐 Authentication
+
+The admin panel uses JWT-based authentication with Zustand for state management.
+
+Default credentials (development):
+- Email: `admin@gmail.com`
+- Password: (to be configured)
+
+## 🌐 Environment Variables
+
+Create a `.env.local` file:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+```
+
+## 📝 Development Guidelines
+
+- Use TypeScript for all code
+- Follow kebab-case for file names
+- Use functional components
+- Keep components under 80 lines
+- Use absolute imports with `@/`
+- Follow the existing design system
+
+## 🚢 Deployment
+
+The admin dashboard can be deployed separately from the main platform:
+
+```bash
+npm run build
+npm run start
+```
+
+Or deploy to Vercel:
+
+```bash
+vercel deploy
+```
+
+## 📄 License
+
+Proprietary - Boulote Platform
