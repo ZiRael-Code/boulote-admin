@@ -78,3 +78,37 @@ export type AIReviewJob = {
 
 export type AIReviewJobsResponse = AIReviewJob[];
 
+export type AIShortlistingStatus = "pending" | "processing" | "completed" | "failed";
+
+export type AIShortlistingStatusResponse = {
+  projectId: number;
+  status: AIShortlistingStatus;
+  startedAt?: string;
+  completedAt?: string;
+  error?: string;
+};
+
+export type ShortlistingResult = {
+  projectId: number;
+  professionals: ShortlistedProfessional[];
+  totalCandidates: number;
+  processedAt: string;
+  matchScores: {
+    professionalId: number;
+    matchScore: number;
+    reasoning: string;
+  }[];
+};
+
+export type ActiveProcess = {
+  projectId: number;
+  projectTitle: string;
+  status: AIShortlistingStatus;
+  startedAt: string;
+  progress?: number;
+};
+
+export type ActiveProcessesResponse = {
+  activeProcesses: ActiveProcess[];
+};
+

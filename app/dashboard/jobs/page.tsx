@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ChevronDown } from "lucide-react";
+import { Search, ChevronDown, X, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import Button from "@/components/ui/button";
 import {
   usePendingJobs,
   useOngoingJobs,
   useAIReviewJobs,
   useCompletedJobs,
+  useStartAIShortlisting,
+  useAIShortlistingStatus,
+  useAIShortlistingResults,
+  useActiveAIShortlistingProcesses,
 } from "@/hooks/use-jobs";
 import type { Job, AIReviewJob } from "@/lib/types/job";
 import { formatRelativeTime } from "@/lib/utils/format-date";
@@ -33,6 +37,8 @@ export default function JobsPage() {
         </div>
         <div className="h-px w-full bg-border-500" />
       </div>
+
+      <ActiveProcessesSection />
 
       <div className="flex flex-col gap-8">
         <div className="border-b border-border-500 flex gap-8 h-16 items-center">
@@ -225,6 +231,16 @@ function PendingRequestsTab() {
 }
 
 function PendingJobCard({ job }: { job: Job }) {
+  const [showResults, setShowResults] = useState(false);
+  const startShortlisting = useStartAIShortlisting();
+  const { data: status, isLoading: isLoadingStatus } = useAIShortlistingStatus(
+    job.id,
+    true,
+    3000
+  );
+  const { data: results, isLoading: isLoadingResults } =
+    useAIShortlistingResults(job.id, status?.status === "completed");
+
   const getUrgencyColor = (urgency: string) => {
     switch (urgency.toLowerCase()) {
       case "high":
@@ -236,76 +252,151 @@ function PendingJobCard({ job }: { job: Job }) {
     }
   };
 
+  const getStatusBadge = () => {
+    if (!status) return null;
+
+    switch (status.status) {
+      case "processing":
+        return (
+          <div className="bg-warning-50 px-2 py-2 rounded-[15px] h-8 flex items-center justify-center gap-2">
+            <Loader2 className="w-4 h-4 text-warning-800 animate-spin" />
+            <span className="text-sm font-normal text-warning-800">
+              Processing
+            </span>
+          </div>
+        );
+      case "completed":
+        return (
+          <div className="bg-success-50 px-2 py-2 rounded-[15px] h-8 flex items-center justify-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-success-800" />
+            <span className="text-sm font-normal text-success-800">
+              Completed
+            </span>
+          </div>
+        );
+      case "failed":
+        return (
+          <div className="bg-error-50 px-2 py-2 rounded-[15px] h-8 flex items-center justify-center gap-2">
+            <AlertCircle className="w-4 h-4 text-error-800" />
+            <span className="text-sm font-normal text-error-800">Failed</span>
+          </div>
+        );
+      default:
+        return (
+          <div className="bg-success-50 px-2 py-2 rounded-[15px] h-8 flex items-center justify-center">
+            <span className="text-sm font-normal text-success-800">
+              Ready for review
+            </span>
+          </div>
+        );
+    }
+  };
+
+  const handleStartShortlisting = () => {
+    startShortlisting.mutate(job.id);
+  };
+
+  const handleViewResults = () => {
+    setShowResults(true);
+  };
+
   return (
-    <div className="border border-border-500 rounded-md p-6 flex flex-col gap-4">
-      <div className="flex gap-4 items-start justify-between">
-        <div className="flex flex-col gap-2 flex-1">
-          <h3 className="text-xl font-medium text-secondary-500">
-            {job.title}
-          </h3>
-          <div className="flex flex-col gap-4">
-            <p className="text-base font-normal text-secondary-500">
-              {job.companyName}
+    <>
+      <div className="border border-border-500 rounded-md p-6 flex flex-col gap-4">
+        <div className="flex gap-4 items-start justify-between">
+          <div className="flex flex-col gap-2 flex-1">
+            <h3 className="text-xl font-medium text-secondary-500">
+              {job.title}
+            </h3>
+            <div className="flex flex-col gap-4">
+              <p className="text-base font-normal text-secondary-500">
+                {job.companyName}
+              </p>
+              <p className="text-xs font-normal text-neutral-500">
+                ID: {job.jobId}
+              </p>
+            </div>
+          </div>
+          {getStatusBadge()}
+        </div>
+
+        <div className="flex gap-20">
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-normal text-neutral-500">BUDGET</p>
+            <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
+              {job.budget}
             </p>
-            <p className="text-xs font-normal text-neutral-500">
-              ID: {job.jobId}
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-normal text-neutral-500">DURATION</p>
+            <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
+              {job.duration}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-normal text-neutral-500">SUBMITTED</p>
+            <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
+              {formatRelativeTime(job.submittedAt)}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-normal text-neutral-500">URGENCY</p>
+            <p
+              className={`text-sm font-normal tracking-[0.1px] ${getUrgencyColor(
+                job.urgency
+              )}`}
+            >
+              {job.urgency}
             </p>
           </div>
         </div>
-        <div className="bg-success-50 px-2 py-2 rounded-[15px] h-8 flex items-center justify-center">
-          <span className="text-sm font-normal text-success-800">
-            Ready for review
-          </span>
+
+        <p className="text-base font-normal text-neutral-500 leading-[19.2px]">
+          {job.description}
+        </p>
+
+        <div className="flex gap-4 items-center self-end">
+          <Button className="bg-primary-500 text-white px-7 py-3 rounded-md h-12">
+            <span className="text-lg font-medium">View Details</span>
+          </Button>
+          {status?.status === "completed" ? (
+            <Button
+              className="bg-success-500 text-white px-7 py-3 rounded-md h-12"
+              onClick={handleViewResults}
+            >
+              <span className="text-lg font-medium">View Results</span>
+            </Button>
+          ) : status?.status === "processing" || status?.status === "pending" ? (
+            <Button
+              variant="outline"
+              className="border border-neutral-500 px-7 py-3 rounded-md h-12"
+              disabled
+            >
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              <span className="text-lg font-medium">Processing...</span>
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              className="border border-neutral-500 px-7 py-3 rounded-md h-12"
+              onClick={handleStartShortlisting}
+              loading={startShortlisting.isPending}
+              disabled={startShortlisting.isPending}
+            >
+              <span className="text-lg font-medium">Start AI Shortlisting</span>
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="flex gap-20">
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-normal text-neutral-500">BUDGET</p>
-          <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
-            {job.budget}
-          </p>
-        </div>
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-normal text-neutral-500">DURATION</p>
-          <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
-            {job.duration}
-          </p>
-        </div>
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-normal text-neutral-500">SUBMITTED</p>
-          <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
-            {formatRelativeTime(job.submittedAt)}
-          </p>
-        </div>
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-normal text-neutral-500">URGENCY</p>
-          <p
-            className={`text-sm font-normal tracking-[0.1px] ${getUrgencyColor(
-              job.urgency
-            )}`}
-          >
-            {job.urgency}
-          </p>
-        </div>
-      </div>
-
-      <p className="text-base font-normal text-neutral-500 leading-[19.2px]">
-        {job.description}
-      </p>
-
-      <div className="flex gap-4 items-center self-end">
-        <Button className="bg-primary-500 text-white px-7 py-3 rounded-md h-12">
-          <span className="text-lg font-medium">View Details</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="border border-neutral-500 px-7 py-3 rounded-md h-12"
-        >
-          <span className="text-lg font-medium">Start AI Shortlisting</span>
-        </Button>
-      </div>
-    </div>
+      {showResults && results && (
+        <ShortlistingResultsModal
+          job={job}
+          results={results}
+          onClose={() => setShowResults(false)}
+        />
+      )}
+    </>
   );
 }
 
@@ -962,6 +1053,243 @@ function CompletedJobCard({ job }: { job: Job }) {
         >
           Performance Reports
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function ShortlistingResultsModal({
+  job,
+  results,
+  onClose,
+}: {
+  job: Job;
+  results: any;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-border-500">
+          <div>
+            <h2 className="text-2xl font-semibold text-secondary-500">
+              AI Shortlisting Results
+            </h2>
+            <p className="text-base text-neutral-500 mt-1">
+              {job.title} • {job.companyName}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 rounded-md"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="p-6 flex flex-col gap-6">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-primary-900">
+                  Total Candidates Found
+                </p>
+                <p className="text-2xl font-semibold text-primary-500 mt-1">
+                  {results.totalCandidates}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-primary-900">
+                  Processed At
+                </p>
+                <p className="text-base text-primary-700 mt-1">
+                  {new Date(results.processedAt).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <h3 className="text-lg font-semibold text-secondary-500">
+              Shortlisted Professionals
+            </h3>
+            <div className="flex flex-col gap-4">
+              {results.professionals.map((professional: any, index: number) => {
+                const matchScore = results.matchScores?.[index];
+                return (
+                  <div
+                    key={index}
+                    className="border border-border-500 rounded-lg p-4 flex flex-col gap-4"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
+                          <span className="text-sm font-medium text-secondary-500">
+                            {professional.initials}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="text-base font-semibold text-secondary-500">
+                            {professional.name}
+                          </h4>
+                          <p className="text-sm text-neutral-500">
+                            {professional.role}
+                          </p>
+                        </div>
+                      </div>
+                      {matchScore && (
+                        <div className="bg-primary-50 px-3 py-1 rounded-md">
+                          <p className="text-sm font-medium text-primary-700">
+                            {matchScore.matchScore}% Match
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <p className="text-xs text-neutral-500">Experience</p>
+                        <p className="text-sm font-medium text-secondary-500">
+                          {professional.yearsExperience} years
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-neutral-500">Projects</p>
+                        <p className="text-sm font-medium text-secondary-500">
+                          {professional.projectsCompleted}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-neutral-500">Reviews</p>
+                        <p className="text-sm font-medium text-secondary-500">
+                          {professional.reviewCount}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-neutral-500">Success Rate</p>
+                        <p className="text-sm font-medium text-secondary-500">
+                          {professional.successRate}%
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-neutral-500 mb-2">Skills</p>
+                      <div className="flex flex-wrap gap-2">
+                        {professional.skills.map((skill: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 bg-neutral-100 text-neutral-700 rounded text-xs"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {matchScore?.reasoning && (
+                      <div className="bg-neutral-50 p-3 rounded-md">
+                        <p className="text-xs font-medium text-neutral-700 mb-1">
+                          AI Match Reasoning
+                        </p>
+                        <p className="text-sm text-neutral-600">
+                          {matchScore.reasoning}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 self-end">
+                      <Button
+                        variant="outline"
+                        className="border border-neutral-500 px-4 py-2"
+                      >
+                        View Profile
+                      </Button>
+                      <Button className="bg-primary-500 text-white px-4 py-2">
+                        Assign to Project
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-4 p-6 border-t border-border-500">
+          <Button
+            variant="outline"
+            className="border border-neutral-500 px-6 py-3"
+            onClick={onClose}
+          >
+            Close
+          </Button>
+          <Button className="bg-primary-500 text-white px-6 py-3">
+            Export Results
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActiveProcessesSection() {
+  const { data, isLoading } = useActiveAIShortlistingProcesses(true);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const activeProcesses = data?.activeProcesses || [];
+
+  if (activeProcesses.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-warning-900">
+          Active AI Shortlisting Processes
+        </h3>
+        <span className="bg-warning-200 text-warning-900 px-3 py-1 rounded-full text-sm font-medium">
+          {activeProcesses.length} Active
+        </span>
+      </div>
+      <div className="flex flex-col gap-2">
+        {activeProcesses.map((process) => (
+          <div
+            key={process.projectId}
+            className="bg-white rounded-md p-3 flex items-center justify-between"
+          >
+            <div className="flex-1">
+              <p className="text-sm font-medium text-secondary-500">
+                {process.projectTitle}
+              </p>
+              <p className="text-xs text-neutral-500">
+                Started: {new Date(process.startedAt).toLocaleString()}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {process.status === "processing" && (
+                <Loader2 className="w-4 h-4 text-primary-500 animate-spin" />
+              )}
+              <span
+                className={`text-xs font-medium px-2 py-1 rounded ${
+                  process.status === "processing"
+                    ? "bg-primary-100 text-primary-700"
+                    : "bg-neutral-100 text-neutral-700"
+                }`}
+              >
+                {process.status}
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
