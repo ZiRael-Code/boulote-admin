@@ -6,14 +6,15 @@ import Button from "@/components/ui/button";
 import {
   usePendingJobs,
   useOngoingJobs,
-  useAIReviewJobs,
   useCompletedJobs,
   useStartAIShortlisting,
   useAIShortlistingStatus,
   useAIShortlistingResults,
   useActiveAIShortlistingProcesses,
+  useAssignSelectedProfessional,
+  useRejectAllAndManuallySelect,
 } from "@/hooks/use-jobs";
-import type { Job, AIReviewJob } from "@/lib/types/job";
+import type { Job } from "@/lib/types/job";
 import { formatRelativeTime } from "@/lib/utils/format-date";
 
 type TabType = "pending" | "ai-review" | "ongoing" | "completed";
@@ -22,7 +23,6 @@ export default function JobsPage() {
   const [activeTab, setActiveTab] = useState<TabType>("pending");
 
   const { data: pendingData } = usePendingJobs(activeTab === "pending");
-  const { data: aiReviewData } = useAIReviewJobs(activeTab === "ai-review");
   const { data: completedData } = useCompletedJobs(activeTab === "completed");
   return (
     <div className="flex flex-col gap-6 px-4 py-8 lg:pl-16 lg:pr-8 lg:py-16">
@@ -85,13 +85,6 @@ export default function JobsPage() {
             >
               AI Review
             </span>
-            {aiReviewData && aiReviewData.length > 0 && (
-              <div className="bg-neutral-200 rounded-full w-8 h-8 flex items-center justify-center">
-                <span className="text-base font-medium text-primary-900">
-                  {aiReviewData.length}
-                </span>
-              </div>
-            )}
           </button>
 
           <button
@@ -141,7 +134,7 @@ export default function JobsPage() {
         </div>
 
         {activeTab === "pending" && <PendingRequestsTab />}
-        {activeTab === "ai-review" && <AIReviewTab />}
+        {activeTab === "ai-review" && <AIReviewTab enabled={activeTab === "ai-review"} />}
         {activeTab === "ongoing" && <OngoingJobsTab />}
         {activeTab === "completed" && <CompletedTab />}
       </div>
@@ -233,13 +226,11 @@ function PendingRequestsTab() {
 function PendingJobCard({ job }: { job: Job }) {
   const [showResults, setShowResults] = useState(false);
   const startShortlisting = useStartAIShortlisting();
-  const { data: status, isLoading: isLoadingStatus } = useAIShortlistingStatus(
+  const { data: status } = useAIShortlistingStatus(job.id, true, 3000);
+  const { data: results } = useAIShortlistingResults(
     job.id,
-    true,
-    3000
+    status?.status === "completed"
   );
-  const { data: results, isLoading: isLoadingResults } =
-    useAIShortlistingResults(job.id, status?.status === "completed");
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency.toLowerCase()) {
@@ -400,8 +391,9 @@ function PendingJobCard({ job }: { job: Job }) {
   );
 }
 
-function AIReviewTab() {
-  const { data, isLoading, error } = useAIReviewJobs(true);
+function AIReviewTab({ enabled = true }: { enabled?: boolean }) {
+  const { data: pendingJobs, isLoading, error } = usePendingJobs(enabled);
+
 
   if (isLoading) {
     return (
@@ -419,7 +411,7 @@ function AIReviewTab() {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <p className="text-error-500 text-lg font-medium mb-2">
-            Failed to load AI review jobs
+            Failed to load jobs
           </p>
           <p className="text-neutral-500">Please try again later</p>
         </div>
@@ -427,10 +419,10 @@ function AIReviewTab() {
     );
   }
 
-  if (!data || !Array.isArray(data) || data.length === 0) {
+  if (!pendingJobs || !pendingJobs.content || pendingJobs.content.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-neutral-500 text-lg">No AI review jobs found</p>
+        <p className="text-neutral-500 text-lg">No jobs found</p>
       </div>
     );
   }
@@ -453,21 +445,91 @@ function AIReviewTab() {
         <Button
           variant="outline"
           className="border border-neutral-500 px-7 py-3"
+          onClick={() => {
+            // Refresh queries
+            window.location.reload();
+          }}
         >
           Refresh status
         </Button>
       </div>
 
       <div className="flex flex-col gap-6">
-        {data.map((job) => (
-          <AIReviewJobCard key={job.jobId} job={job} />
+        {pendingJobs.content.map((job) => (
+          <AIReviewJobCard key={job.id} job={job} enabled={enabled} />
         ))}
       </div>
     </div>
   );
 }
 
-function AIReviewJobCard({ job }: { job: AIReviewJob }) {
+function AIReviewJobCard({ job, enabled = true }: { job: Job; enabled?: boolean }) {
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<number | null>(null);
+  const projectId = job.id;
+  // Fetch results directly - if they exist, show the job; if not, hide it
+  const { data: results, isLoading: isLoadingResults, error: resultsError } = useAIShortlistingResults(
+    projectId,
+    enabled
+  );
+  const assignMutation = useAssignSelectedProfessional();
+  const rejectMutation = useRejectAllAndManuallySelect();
+
+  const professionals = results?.professionals || [];
+  const totalCandidates = results?.candidatesFound || 0;
+
+  const handleAssign = () => {
+    if (!selectedProfessionalId) {
+      alert("Please select a professional to assign");
+      return;
+    }
+    assignMutation.mutate({
+      projectId,
+      professionalId: selectedProfessionalId,
+      assignmentNotes: "BY SYSTEM",
+    });
+  };
+
+  const handleRejectAll = () => {
+    if (
+      confirm(
+        "Are you sure you want to reject all AI suggestions and manually select?"
+      )
+    ) {
+      rejectMutation.mutate({
+        projectId,
+        rejectionReason: "AI suggestions did not meet project requirements",
+        alternativePlan: "Manual selection",
+      });
+    }
+  };
+
+  // Only show jobs that have results (completed AI shortlisting)
+  // If results are loading, show loading state
+  // If results error (404 or no results), hide the job
+  if (isLoadingResults) {
+    return (
+      <div className="border border-border-500 rounded-md p-6 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // If no results or error, don't show this job
+  if (!results || resultsError) {
+    return null;
+  }
+
+  // Since we only show jobs with results, they're ready for review
+  const getStatusBadge = () => {
+    return (
+      <div className="bg-success-50 px-2 py-2 rounded-[15px]">
+        <span className="text-sm font-normal text-success-800">
+          Ready for review
+        </span>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="border border-border-500 rounded-md p-6 flex flex-col gap-4">
@@ -485,26 +547,20 @@ function AIReviewJobCard({ job }: { job: AIReviewJob }) {
               </p>
             </div>
           </div>
-          <div className="bg-success-50 px-2 py-2 rounded-[15px]">
-            <span className="text-sm font-normal text-success-800">
-              Ready for review
-            </span>
-          </div>
+          {getStatusBadge()}
         </div>
 
         <div className="flex gap-20">
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-normal text-neutral-500">
-              AI MATCH SCORE
-            </p>
+            <p className="text-xs font-normal text-neutral-500">BUDGET</p>
             <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
-              {job.aiMatchScore}
+              {job.budget}
             </p>
           </div>
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-normal text-neutral-500">PROCESSED</p>
+            <p className="text-xs font-normal text-neutral-500">DURATION</p>
             <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
-              {job.processedTime}
+              {job.duration}
             </p>
           </div>
           <div className="flex flex-col gap-2">
@@ -512,7 +568,9 @@ function AIReviewJobCard({ job }: { job: AIReviewJob }) {
               CANDIDATES FOUND
             </p>
             <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
-              {job.candidatesFound} Professional{job.candidatesFound !== 1 ? "s" : ""}
+              {isLoadingResults
+                ? "Loading..."
+                : `${totalCandidates} Professional${totalCandidates !== 1 ? "s" : ""}`}
             </p>
           </div>
           <div className="flex flex-col gap-2">
@@ -527,20 +585,21 @@ function AIReviewJobCard({ job }: { job: AIReviewJob }) {
           <Button className="bg-primary-500 text-white px-7 py-3">
             View Details
           </Button>
-          <Button
-            variant="outline"
-            className="border border-neutral-500 px-7 py-3"
-          >
-            Processing ...
-          </Button>
         </div>
       </div>
 
-      {job.shortlistedProfessionals && job.shortlistedProfessionals.length > 0 && (
+      {isLoadingResults ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-neutral-500">Loading shortlisting results...</p>
+          </div>
+        </div>
+      ) : professionals.length > 0 ? (
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-medium text-secondary-500">
-              AI Shortlisted Professional
+              AI Shortlisted Professionals
               <span className="ml-3 bg-primary-200 px-3 py-1 rounded-full text-sm">
                 AI Selected
               </span>
@@ -548,22 +607,69 @@ function AIReviewJobCard({ job }: { job: AIReviewJob }) {
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            {job.shortlistedProfessionals.map((professional, index) => (
-              <ProfessionalCard key={index} professional={professional} />
-            ))}
+            {professionals.map((shortlisted, index) => {
+              const professional = shortlisted.professional;
+              const professionalId = professional.id;
+              const isSelected = selectedProfessionalId === professionalId;
+              
+              // Extract data for ProfessionalCard
+              const professionalData = {
+                initials: `${professional.firstName?.[0] || ""}${professional.lastName?.[0] || ""}`.toUpperCase(),
+                name: `${professional.firstName} ${professional.lastName}`,
+                role: professional.profession || "Professional",
+                reviewCount: professional.totalRatings || 0,
+                successRate: professional.successRate || 0,
+                yearsExperience: 0, // Not in API response, will need to calculate or get from elsewhere
+                projectsCompleted: 0, // Not in API response
+                aiMatch: `${shortlisted.matchScore}%`,
+                skills: shortlisted.matchedSkills || [],
+              };
+
+              return (
+                <div key={professionalId || index}>
+                  <ProfessionalCard
+                    professional={professionalData}
+                    matchScore={{
+                      matchScore: shortlisted.matchScore,
+                      reasoning: `Match Level: ${shortlisted.matchLevel}`,
+                    }}
+                    isSelected={isSelected}
+                    onSelect={() =>
+                      setSelectedProfessionalId(
+                        isSelected ? null : professionalId
+                      )
+                    }
+                  />
+                </div>
+              );
+            })}
           </div>
 
           <div className="flex gap-4 justify-end">
-            <Button className="bg-primary-500 text-white px-7 py-3">
-              Assign selected professionals
+            <Button
+              className="bg-primary-500 text-white px-7 py-3"
+              onClick={handleAssign}
+              loading={assignMutation.isPending}
+              disabled={!selectedProfessionalId || assignMutation.isPending || rejectMutation.isPending}
+            >
+              Assign selected professional
             </Button>
             <Button
               variant="outline"
               className="border border-neutral-500 px-7 py-3"
+              onClick={handleRejectAll}
+              loading={rejectMutation.isPending}
+              disabled={assignMutation.isPending || rejectMutation.isPending}
             >
               Reject all and manually select
             </Button>
           </div>
+        </div>
+      ) : (
+        <div className="bg-white border border-border-500 rounded-lg p-6">
+          <p className="text-neutral-500 text-center">
+            No shortlisted professionals found
+          </p>
         </div>
       )}
     </div>
@@ -572,6 +678,9 @@ function AIReviewJobCard({ job }: { job: AIReviewJob }) {
 
 function ProfessionalCard({
   professional,
+  matchScore,
+  isSelected,
+  onSelect,
 }: {
   professional: {
     initials: string;
@@ -584,9 +693,22 @@ function ProfessionalCard({
     aiMatch: string;
     skills: string[];
   };
+  matchScore?: {
+    matchScore: number;
+    reasoning: string;
+  };
+  isSelected?: boolean;
+  onSelect?: () => void;
 }) {
   return (
-    <div className="border border-border-500 rounded-md p-6 flex gap-4 items-start">
+    <div
+      className={`border rounded-md p-6 flex gap-4 items-start cursor-pointer transition-all ${
+        isSelected
+          ? "border-primary-500 bg-primary-50"
+          : "border-border-500 hover:border-primary-300"
+      }`}
+      onClick={onSelect}
+    >
       <div className="flex-1 flex gap-4">
         <div className="w-[70px] h-[70px] rounded-full bg-[#CFD3D7] flex items-center justify-center shrink-0">
           <span className="text-[16.8px] font-medium">{professional.initials}</span>
@@ -608,6 +730,20 @@ function ProfessionalCard({
                 ({professional.reviewCount} reviews) • {professional.successRate}% success rate
               </p>
             </div>
+            {matchScore && (
+              <div className="mt-2 bg-primary-50 p-2 rounded">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-primary-600">
+                    {matchScore.matchScore}% Match
+                  </span>
+                </div>
+                {matchScore.reasoning && (
+                  <p className="text-xs text-neutral-600 mt-1">
+                    {matchScore.reasoning}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-16">
@@ -625,7 +761,7 @@ function ProfessionalCard({
             </div>
             <div className="flex flex-col gap-2 items-center">
               <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
-                {professional.aiMatch}
+                {matchScore ? `${matchScore.matchScore}%` : professional.aiMatch}
               </p>
               <p className="text-xs font-normal text-neutral-500">AI MATCH</p>
             </div>
@@ -643,22 +779,16 @@ function ProfessionalCard({
               </div>
             ))}
           </div>
-
-          <div className="flex gap-4">
-            <Button className="bg-primary-500 text-white flex-1 h-12">
-              <span className="text-lg font-medium">View Details</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="border border-neutral-500 flex-1 h-[46px]"
-            >
-              <span className="text-lg font-medium">Processing ...</span>
-            </Button>
-          </div>
         </div>
       </div>
 
-      <input type="checkbox" className="w-6 h-6 shrink-0" />
+      <input
+        type="checkbox"
+        checked={isSelected || false}
+        onChange={onSelect}
+        onClick={(e) => e.stopPropagation()}
+        className="w-6 h-6 shrink-0 text-primary-500 border-neutral-300 rounded focus:ring-primary-500"
+      />
     </div>
   );
 }
@@ -1103,7 +1233,7 @@ function ShortlistingResultsModal({
                   Processed At
                 </p>
                 <p className="text-base text-primary-700 mt-1">
-                  {new Date(results.processedAt).toLocaleString()}
+                  {new Date(results.processedTime).toLocaleString()}
                 </p>
               </div>
             </div>

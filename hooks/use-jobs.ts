@@ -3,16 +3,18 @@ import toast from "react-hot-toast";
 import {
   getPendingJobs,
   getOngoingJobs,
-  getAIReviewJobs,
   getCompletedJobs,
   startAIShortlisting,
   getAIShortlistingStatus,
   getAIShortlistingResults,
   getActiveAIShortlistingProcesses,
+  assignSelectedProfessional,
+  rejectAllAndManuallySelect,
+  type AssignProfessionalRequest,
+  type RejectAllRequest,
 } from "@/lib/api/services/jobs";
 import type {
   JobsResponse,
-  AIReviewJobsResponse,
   AIShortlistingStatusResponse,
   ShortlistingResult,
   ActiveProcessesResponse,
@@ -34,13 +36,6 @@ export function useOngoingJobs(enabled = true) {
   });
 }
 
-export function useAIReviewJobs(enabled = true) {
-  return useQuery<AIReviewJobsResponse>({
-    queryKey: ["jobs", "ai-review"],
-    queryFn: getAIReviewJobs,
-    enabled,
-  });
-}
 
 export function useCompletedJobs(enabled = true) {
   return useQuery<JobsResponse>({
@@ -96,10 +91,11 @@ export function useAIShortlistingStatus(
 }
 
 export function useAIShortlistingResults(projectId: number, enabled = true) {
-  return useQuery<ShortlistingResult>({
+  return useQuery<ShortlistingResult | null>({
     queryKey: ["ai-shortlisting", "results", projectId],
     queryFn: () => getAIShortlistingResults(projectId),
     enabled: enabled && !!projectId,
+    retry: false, // Don't retry on 400 errors
   });
 }
 
@@ -109,6 +105,60 @@ export function useActiveAIShortlistingProcesses(enabled = true) {
     queryFn: getActiveAIShortlistingProcesses,
     enabled,
     refetchInterval: 5000, // Poll every 5 seconds for active processes
+  });
+}
+
+export function useAssignSelectedProfessional() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: AssignProfessionalRequest) =>
+      assignSelectedProfessional(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["ai-shortlisting", "results", variables.projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["jobs", "ai-review"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["jobs", "pending"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["jobs", "ongoing"],
+      });
+      toast.success("Professional assigned successfully");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to assign professional"
+      );
+    },
+  });
+}
+
+export function useRejectAllAndManuallySelect() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: RejectAllRequest) => rejectAllAndManuallySelect(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["ai-shortlisting", "results", variables.projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["jobs", "ai-review"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["jobs", "pending"],
+      });
+      toast.success("All professionals rejected. You can now manually select.");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to reject professionals"
+      );
+    },
   });
 }
 

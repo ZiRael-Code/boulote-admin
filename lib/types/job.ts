@@ -53,30 +53,35 @@ export type JobsResponse = {
   empty: boolean;
 };
 
-export type ShortlistedProfessional = {
-  initials: string;
-  name: string;
-  role: string;
-  reviewCount: number;
+export type Professional = {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  profession: string;
+  bio: string | null;
+  profilePictureUrl: string | null;
+  averageRating: number | null;
+  totalRatings: number | null;
+  location: string | null;
+  phoneNumber: string | null;
   successRate: number;
-  yearsExperience: number;
-  projectsCompleted: number;
-  aiMatch: string;
-  skills: string[];
+  // Add other fields as needed
 };
 
-export type AIReviewJob = {
-  jobId: string;
-  title: string;
-  companyName: string;
-  aiMatchScore: string;
-  processedTime: string;
-  candidatesFound: number;
-  urgency: Urgency;
-  shortlistedProfessionals: ShortlistedProfessional[];
+export type ShortlistedProfessional = {
+  professional: Professional;
+  matchScore: number;
+  scoreBreakdown: {
+    profession: number;
+    skills: number;
+    performance: number;
+    experience: number;
+  };
+  matchedSkills: string[];
+  missingSkills: string[];
+  matchLevel: "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
 };
-
-export type AIReviewJobsResponse = AIReviewJob[];
 
 export type AIShortlistingStatus = "pending" | "processing" | "completed" | "failed";
 
@@ -90,14 +95,17 @@ export type AIShortlistingStatusResponse = {
 
 export type ShortlistingResult = {
   projectId: number;
+  jobId: string;
+  title: string;
+  companyName: string;
+  status: string;
+  processedTime: string;
+  candidatesFound: number;
+  urgency: Urgency;
+  aiMatchScore: string;
+  errorMessage: string | null;
   professionals: ShortlistedProfessional[];
-  totalCandidates: number;
-  processedAt: string;
-  matchScores: {
-    professionalId: number;
-    matchScore: number;
-    reasoning: string;
-  }[];
+  createdAt: string;
 };
 
 export type ActiveProcess = {
