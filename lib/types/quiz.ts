@@ -30,7 +30,7 @@ export type Quiz = {
   difficulty?: QuizDifficulty;
   status: QuizStatus;
   timeLimitMinutes: number;
-  passingScore?: number; // percentage
+  passingScore?: number;
   questionsCount: number;
   totalAttempts: number;
   averageScore: number;
@@ -73,7 +73,7 @@ export type QuizAttempt = {
   professionalName: string;
   score: number;
   passed: boolean;
-  duration: number; // in minutes
+  duration: number;
   completedAt: string;
 };
 
@@ -117,13 +117,13 @@ export type QuestionPerformance = {
   questionId: number;
   questionText: string;
   correctPercentage: number;
-  avgTime: number; // in seconds
+  avgTime: number;
   difficulty: "EASY" | "MEDIUM" | "HARD";
 };
 
 export type QuizSettings = {
   defaultDuration: number;
-  autoSaveInterval: number; // in seconds
+  autoSaveInterval: number;
   defaultPassingScore: number;
   estimatedLevel: number;
   maxQuestionsPerQuiz: number;

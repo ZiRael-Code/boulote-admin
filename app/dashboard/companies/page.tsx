@@ -2,8 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ChevronDown } from "lucide-react";
+import { Search } from "lucide-react";
 import Button from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Avatar } from "@/components/ui/avatar";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { StatCard } from "@/components/ui/stat-card";
+import { Pagination } from "@/components/ui/pagination";
 import {
   useCompaniesDashboard,
   useCompanies,
@@ -24,41 +30,6 @@ export default function CompaniesPage() {
   const companies = companiesData?.content || [];
   const totalCompanies = companiesData?.totalElements || 0;
   const totalPages = companiesData?.totalPages || 1;
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Active":
-        return (
-          <span className="px-2 py-1 bg-success-50 text-success-700 rounded text-xs font-medium">
-            Active
-          </span>
-        );
-      case "IN_REVIEW":
-        return (
-          <span className="px-2 py-1 bg-primary-50 text-primary-700 rounded text-xs font-medium">
-            IN REVIEW
-          </span>
-        );
-      case "Pending":
-        return (
-          <span className="px-2 py-1 bg-warning-50 text-warning-700 rounded text-xs font-medium">
-            Pending
-          </span>
-        );
-      case "Inactive":
-        return (
-          <span className="px-2 py-1 bg-neutral-100 text-neutral-700 rounded text-xs font-medium">
-            Inactive
-          </span>
-        );
-      default:
-        return (
-          <span className="px-2 py-1 bg-neutral-100 text-neutral-700 rounded text-xs font-medium">
-            {status}
-          </span>
-        );
-    }
-  };
 
   return (
     <div className="flex flex-col gap-8 px-8 py-8">
@@ -93,41 +64,10 @@ export default function CompaniesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-          <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-5">
-            <p className="text-2xl font-semibold text-primary-500">
-              {stats?.totalCompanies?.toLocaleString() || 0}
-            </p>
-            <p className="text-xl font-normal text-secondary-500">
-              Total Companies
-            </p>
-          </div>
-
-          <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-5">
-            <p className="text-2xl font-semibold text-primary-500">
-              {stats?.activeCompanies || 0}
-            </p>
-            <p className="text-xl font-normal text-secondary-500">
-              Active Companies
-            </p>
-          </div>
-
-          <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-5">
-            <p className="text-2xl font-semibold text-primary-500">
-              {stats?.pendingApprovals || 0}
-            </p>
-            <p className="text-xl font-normal text-secondary-500">
-              Pending Approvals
-            </p>
-          </div>
-
-          <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-5">
-            <p className="text-2xl font-semibold text-primary-500">
-              {(stats?.premiumPlans || 0) + (stats?.enterprisePlans || 0)}
-            </p>
-            <p className="text-xl font-normal text-secondary-500">
-              Premium & Enterprise
-            </p>
-          </div>
+          <StatCard value={stats?.totalCompanies?.toLocaleString() || 0} label="Total Companies" />
+          <StatCard value={stats?.activeCompanies || 0} label="Active Companies" />
+          <StatCard value={stats?.pendingApprovals || 0} label="Pending Approvals" />
+          <StatCard value={(stats?.premiumPlans || 0) + (stats?.enterprisePlans || 0)} label="Premium & Enterprise" />
         </div>
       )}
 
@@ -177,18 +117,11 @@ export default function CompaniesPage() {
 
         {isLoadingCompanies ? (
           <div className="bg-white border border-border-500 rounded-lg p-6">
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-neutral-500">Loading companies...</p>
-              </div>
-            </div>
+            <LoadingSpinner message="Loading companies..." />
           </div>
         ) : companies.length === 0 ? (
           <div className="bg-white border border-border-500 rounded-lg p-6">
-            <div className="flex items-center justify-center py-12">
-              <p className="text-neutral-500 text-lg">No companies found</p>
-            </div>
+            <EmptyState message="No companies found" />
           </div>
         ) : (
           <div className="bg-white border border-border-500 rounded-lg overflow-hidden">
@@ -224,7 +157,6 @@ export default function CompaniesPage() {
                     key={company.id}
                     company={company}
                     router={router}
-                    getStatusBadge={getStatusBadge}
                   />
                 ))}
               </tbody>
@@ -233,50 +165,14 @@ export default function CompaniesPage() {
         )}
 
         {totalCompanies > 0 && (
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="flex items-center gap-2 text-sm text-neutral-500 disabled:opacity-50"
-            >
-              ← Previous Page
-            </button>
-
-            <div className="flex items-center gap-2">
-              {Array.from({ length: Math.min(totalPages, 5) }).map(
-                (_, index) => {
-                  const pageNum = index + 1;
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`w-10 h-10 rounded-md flex items-center justify-center text-sm ${
-                        currentPage === pageNum
-                          ? "bg-primary-500 text-white"
-                          : "bg-white border border-border-500 text-secondary-500"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                }
-              )}
-            </div>
-
-            <button
-              onClick={() =>
-                setCurrentPage(Math.min(totalPages, currentPage + 1))
-              }
-              disabled={currentPage >= totalPages}
-              className="flex items-center gap-2 text-sm text-neutral-500 disabled:opacity-50"
-            >
-              Next Page →
-            </button>
-
-            <p className="text-sm text-neutral-500">
-              Showing {companies.length} of {totalCompanies} companies
-            </p>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalCompanies}
+            shownItems={companies.length}
+            itemLabel="companies"
+            onPageChange={setCurrentPage}
+          />
         )}
       </div>
     </div>
@@ -286,11 +182,9 @@ export default function CompaniesPage() {
 function CompanyRow({
   company,
   router,
-  getStatusBadge,
 }: {
   company: Company;
   router: ReturnType<typeof useRouter>;
-  getStatusBadge: (status: string) => JSX.Element;
 }) {
   const isPending = company.status === "IN_REVIEW" || company.status === "Pending";
 
@@ -298,11 +192,7 @@ function CompanyRow({
     <tr className="hover:bg-neutral-50">
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
-            <span className="text-sm font-medium text-secondary-500">
-              {company.initials}
-            </span>
-          </div>
+          <Avatar initials={company.initials} />
           <div className="flex flex-col">
             <p className="text-sm font-medium text-secondary-500">
               {company.name}
@@ -320,7 +210,7 @@ function CompanyRow({
       <td className="px-6 py-4">
         <span className="text-sm text-secondary-500">{company.plan}</span>
       </td>
-      <td className="px-6 py-4">{getStatusBadge(company.status)}</td>
+      <td className="px-6 py-4"><StatusBadge status={company.status} /></td>
       <td className="px-6 py-4">
         <span className="text-sm text-secondary-500">
           {formatRelativeTime(company.lastActive)}

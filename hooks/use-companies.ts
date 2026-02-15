@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { useQuery } from "@tanstack/react-query";
+import { useMutationWithToast } from "./use-mutation-with-toast";
 import {
   getCompaniesDashboard,
   getCompanies,
@@ -47,39 +47,27 @@ export function useCompanyProfile(companyId: number, enabled = true) {
   });
 }
 
-export function useApproveCompany() {
-  const queryClient = useQueryClient();
+const COMPANY_INVALIDATE_KEYS = [
+  ["companies", "pending"],
+  ["companies", "dashboard"],
+  ["companies", "list"],
+];
 
-  return useMutation({
+export function useApproveCompany() {
+  return useMutationWithToast({
     mutationFn: (companyId: number) => approveCompany(companyId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["companies", "pending"] });
-      queryClient.invalidateQueries({ queryKey: ["companies", "dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["companies", "list"] });
-      toast.success("Company approved successfully");
-    },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Failed to approve company");
-    },
+    successMessage: "Company approved successfully",
+    errorMessage: "Failed to approve company",
+    invalidateKeys: COMPANY_INVALIDATE_KEYS,
   });
 }
 
 export function useRejectCompany() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({ companyId, reason }: { companyId: number; reason?: string }) =>
       rejectCompany(companyId, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["companies", "pending"] });
-      queryClient.invalidateQueries({ queryKey: ["companies", "dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["companies", "list"] });
-      toast.success("Company rejected successfully");
-    },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Failed to reject company");
-    },
+    successMessage: "Company rejected successfully",
+    errorMessage: "Failed to reject company",
+    invalidateKeys: COMPANY_INVALIDATE_KEYS,
   });
 }
-
-

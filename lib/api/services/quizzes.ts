@@ -107,7 +107,7 @@ export type CreateQuizRequest = {
   }>;
   timeLimit?: {
     enabled: boolean;
-    duration: number; // in minutes
+    duration: number;
   };
   attempts?: number;
   passingScore: number;

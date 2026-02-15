@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import Button from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Avatar } from "@/components/ui/avatar";
+import { BackButton } from "@/components/ui/back-button";
+import { AlertBanner } from "@/components/ui/alert-banner";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   usePendingCompanyApprovals,
   useApproveCompany,
@@ -34,12 +38,7 @@ export default function PendingCompanyApprovalsPage() {
     return (
       <div className="flex flex-col gap-8 px-8 py-8">
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => router.back()}
-            className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 rounded-md"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
+          <BackButton />
           <h1 className="text-2xl font-semibold text-secondary-500">
             Pending company Approval
           </h1>
@@ -72,12 +71,7 @@ export default function PendingCompanyApprovalsPage() {
   return (
     <div className="flex flex-col gap-8 px-8 py-8">
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 rounded-md"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
+        <BackButton />
         <h1 className="text-2xl font-semibold text-secondary-500">
           Pending company Approval
         </h1>
@@ -88,12 +82,9 @@ export default function PendingCompanyApprovalsPage() {
       </p>
 
       {pendingCompanies.length > 0 && (
-        <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
-          <p className="text-sm font-semibold text-warning-800">
-            {pendingCompanies.length} Companies are waiting for approval.
-            Average review time: 2-3 days.
-          </p>
-        </div>
+        <AlertBanner
+          title={`${pendingCompanies.length} Companies are waiting for approval. Average review time: 2-3 days.`}
+        />
       )}
 
       <div className="flex gap-4 items-center">
@@ -114,12 +105,7 @@ export default function PendingCompanyApprovalsPage() {
 
       {isLoading ? (
         <div className="bg-white border border-border-500 rounded-lg p-6">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-neutral-500">Loading pending approvals...</p>
-            </div>
-          </div>
+          <LoadingSpinner message="Loading pending approvals..." />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -161,11 +147,7 @@ function PendingCompanyCard({
     <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-4">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
-            <span className="text-sm font-medium text-secondary-500">
-              {company.initials}
-            </span>
-          </div>
+          <Avatar initials={company.initials} size="lg" />
           <div className="flex flex-col">
             <h3 className="text-base font-semibold text-secondary-500">
               {company.name}
@@ -175,9 +157,7 @@ function PendingCompanyCard({
             </p>
           </div>
         </div>
-        <span className="px-2 py-1 bg-warning-50 text-warning-700 rounded text-xs font-medium">
-          PENDING
-        </span>
+        <StatusBadge status="Pending" label="PENDING" />
       </div>
 
       <div className="flex flex-col gap-2 text-sm">
@@ -243,4 +223,3 @@ function PendingCompanyCard({
     </div>
   );
 }
-

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type AdminUser = {
+export type AdminUser = {
   id: number;
   email: string;
   firstName: string;
@@ -24,11 +24,9 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       setAuth: (user, token) => {
-        localStorage.setItem("token", token);
         set({ user, token, isAuthenticated: true });
       },
       clearAuth: () => {
-        localStorage.removeItem("token");
         set({ user: null, token: null, isAuthenticated: false });
       },
     }),
@@ -37,4 +35,3 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
-

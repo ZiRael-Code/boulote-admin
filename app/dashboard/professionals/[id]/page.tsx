@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 import Button from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
+import { Tabs } from "@/components/ui/tabs";
+import { Avatar } from "@/components/ui/avatar";
+import { StatCard } from "@/components/ui/stat-card";
 
 type TabType = "overview" | "quiz-history" | "activity" | "reviews";
 
@@ -14,12 +17,7 @@ export default function ProfessionalProfilePage() {
   return (
     <div className="flex flex-col gap-8 px-8 py-8">
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 rounded-md"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
+        <BackButton />
         <h1 className="text-2xl font-semibold text-secondary-500">
           Professional Profile
         </h1>
@@ -27,9 +25,7 @@ export default function ProfessionalProfilePage() {
 
       <div className="flex items-start justify-between">
         <div className="flex gap-6">
-          <div className="w-[100px] h-[100px] rounded-full bg-[#C7D7E8] flex items-center justify-center shrink-0">
-            <span className="text-2xl font-medium text-secondary-500">JD</span>
-          </div>
+          <Avatar initials="JD" size="xl" />
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl font-semibold text-secondary-500">John Doe</h2>
             <p className="text-base text-secondary-500">Senior Frontend Developer</p>
@@ -59,48 +55,16 @@ export default function ProfessionalProfilePage() {
         </div>
       </div>
 
-      <div className="border-b border-border-500 flex gap-8">
-        <button
-          onClick={() => setActiveTab("overview")}
-          className={`px-4 py-3 border-b-2 text-base font-medium transition-colors ${
-            activeTab === "overview"
-              ? "border-primary-500 text-primary-500"
-              : "border-transparent text-secondary-500"
-          }`}
-        >
-          Overview
-        </button>
-        <button
-          onClick={() => setActiveTab("quiz-history")}
-          className={`px-4 py-3 border-b-2 text-base font-medium transition-colors ${
-            activeTab === "quiz-history"
-              ? "border-primary-500 text-primary-500"
-              : "border-transparent text-secondary-500"
-          }`}
-        >
-          Quiz History
-        </button>
-        <button
-          onClick={() => setActiveTab("activity")}
-          className={`px-4 py-3 border-b-2 text-base font-medium transition-colors ${
-            activeTab === "activity"
-              ? "border-primary-500 text-primary-500"
-              : "border-transparent text-secondary-500"
-          }`}
-        >
-          Activity
-        </button>
-        <button
-          onClick={() => setActiveTab("reviews")}
-          className={`px-4 py-3 border-b-2 text-base font-medium transition-colors ${
-            activeTab === "reviews"
-              ? "border-primary-500 text-primary-500"
-              : "border-transparent text-secondary-500"
-          }`}
-        >
-          Reviews
-        </button>
-      </div>
+      <Tabs
+        tabs={[
+          { value: "overview" as const, label: "Overview" },
+          { value: "quiz-history" as const, label: "Quiz History" },
+          { value: "activity" as const, label: "Activity" },
+          { value: "reviews" as const, label: "Reviews" },
+        ]}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       {activeTab === "overview" && <OverviewTab router={router} />}
       {activeTab === "quiz-history" && <QuizHistoryTab />}
@@ -207,22 +171,10 @@ function QuizHistoryTab() {
   return (
     <div className="flex flex-col gap-8">
       <div className="grid grid-cols-4 gap-6">
-        <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col items-center gap-2">
-          <p className="text-2xl font-semibold text-primary-500">12</p>
-          <p className="text-sm text-secondary-500">Quiz Taken</p>
-        </div>
-        <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col items-center gap-2">
-          <p className="text-2xl font-semibold text-primary-500">89%</p>
-          <p className="text-sm text-secondary-500">Average score</p>
-        </div>
-        <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col items-center gap-2">
-          <p className="text-2xl font-semibold text-primary-500">8</p>
-          <p className="text-sm text-secondary-500">Skills certified</p>
-        </div>
-        <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col items-center gap-2">
-          <p className="text-2xl font-semibold text-primary-500">Advanced</p>
-          <p className="text-sm text-secondary-500">Skill level</p>
-        </div>
+        <StatCard value={12} label="Quiz Taken" />
+        <StatCard value="89%" label="Average score" />
+        <StatCard value={8} label="Skills certified" />
+        <StatCard value="Advanced" label="Skill level" />
       </div>
 
       <div className="flex flex-col gap-4">

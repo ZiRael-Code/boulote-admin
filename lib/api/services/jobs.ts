@@ -16,7 +16,6 @@ export async function getOngoingJobs(): Promise<JobsResponse> {
   return response.data;
 }
 
-
 export async function getCompletedJobs(): Promise<JobsResponse> {
   const response = await axiosInstance.get<JobsResponse>("/admin/job/completed");
   return response.data;
@@ -43,12 +42,12 @@ export async function getAIShortlistingResults(
       `/admin/ai-shortlisting/project/results/${projectId}`
     );
     return response.data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Handle 400 error as "no results" - this is expected when shortlisting is not completed
-    if (error.response?.status === 400) {
+    const axiosError = error as { response?: { status?: number } };
+    if (axiosError.response?.status === 400) {
       return null;
     }
-    // Re-throw other errors
     throw error;
   }
 }

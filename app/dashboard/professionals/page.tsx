@@ -4,11 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import Button from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Avatar } from "@/components/ui/avatar";
+import { Rating } from "@/components/ui/rating";
+import { StatCard } from "@/components/ui/stat-card";
+import { Pagination } from "@/components/ui/pagination";
 import {
   useProfessionalsDashboard,
   useProfessionals,
 } from "@/hooks/use-professionals";
 import { formatDate } from "@/lib/utils/format-date";
+import { getStatusTextColor } from "@/lib/utils/status-colors";
 import type { Professional } from "@/lib/types/professional";
 
 export default function ProfessionalsPage() {
@@ -25,19 +32,6 @@ export default function ProfessionalsPage() {
   const professionals = professionalsData?.content || [];
   const totalProfessionals = professionalsData?.totalElements || 0;
   const totalPages = professionalsData?.totalPages || 1;
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "text-warning-500";
-      case "ACTIVE":
-        return "text-success-500";
-      case "INACTIVE":
-        return "text-neutral-500";
-      default:
-        return "text-secondary-500";
-    }
-  };
 
   const getSubscriptionColor = (subscription: string) => {
     switch (subscription) {
@@ -61,55 +55,12 @@ export default function ProfessionalsPage() {
         </p>
       </div>
 
-      {isLoadingStats ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="bg-white border border-border-500 rounded-lg p-6 animate-pulse"
-            >
-              <div className="h-8 bg-neutral-200 rounded mb-4" />
-              <div className="h-6 bg-neutral-200 rounded" />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-          <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-5">
-            <p className="text-2xl font-semibold text-primary-500">
-              {stats?.pendingApprovals || 0}
-            </p>
-            <p className="text-xl font-normal text-secondary-500">
-              Pending Approvals
-            </p>
-          </div>
-
-          <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-5">
-            <p className="text-2xl font-semibold text-primary-500">
-              {stats?.activeProfessionals || 0}
-            </p>
-            <p className="text-xl font-normal text-secondary-500">Active</p>
-          </div>
-
-          <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-5">
-            <p className="text-2xl font-semibold text-primary-500">
-              {stats?.premiumMembers || 0}
-            </p>
-            <p className="text-xl font-normal text-secondary-500">
-              Premium members
-            </p>
-          </div>
-
-          <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-5">
-            <p className="text-2xl font-semibold text-primary-500">
-              {stats?.totalProfessionals?.toLocaleString() || 0}
-            </p>
-            <p className="text-xl font-normal text-secondary-500">
-              Total Professionals
-            </p>
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+        <StatCard value={isLoadingStats ? "..." : stats?.pendingApprovals || 0} label="Pending Approvals" />
+        <StatCard value={isLoadingStats ? "..." : stats?.activeProfessionals || 0} label="Active" />
+        <StatCard value={isLoadingStats ? "..." : stats?.premiumMembers || 0} label="Premium members" />
+        <StatCard value={isLoadingStats ? "..." : stats?.totalProfessionals?.toLocaleString() || 0} label="Total Professionals" />
+      </div>
 
       <div className="flex flex-col gap-6">
         <div className="flex flex-wrap gap-4 items-center">
@@ -158,18 +109,11 @@ export default function ProfessionalsPage() {
 
       {isLoadingProfessionals ? (
         <div className="bg-white border border-border-500 rounded-lg p-6">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-neutral-500">Loading professionals...</p>
-            </div>
-          </div>
+          <LoadingSpinner message="Loading professionals..." className="py-12" />
         </div>
       ) : professionals.length === 0 ? (
         <div className="bg-white border border-border-500 rounded-lg p-6">
-          <div className="flex items-center justify-center py-12">
-            <p className="text-neutral-500 text-lg">No professionals found</p>
-          </div>
+          <EmptyState message="No professionals found" className="py-12" />
         </div>
       ) : (
         <div className="bg-white border border-border-500 rounded-lg overflow-hidden">
@@ -205,7 +149,6 @@ export default function ProfessionalsPage() {
                   key={professional.id}
                   professional={professional}
                   router={router}
-                  getStatusColor={getStatusColor}
                   getSubscriptionColor={getSubscriptionColor}
                 />
               ))}
@@ -215,46 +158,14 @@ export default function ProfessionalsPage() {
       )}
 
       {totalProfessionals > 0 && (
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            className="flex items-center gap-2 text-sm text-neutral-500 disabled:opacity-50"
-          >
-            ← Previous Page
-          </button>
-
-          <div className="flex items-center gap-2">
-            {Array.from({ length: Math.min(totalPages, 5) }).map((_, index) => {
-              const pageNum = index + 1;
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`w-10 h-10 rounded-md flex items-center justify-center text-sm ${
-                    currentPage === pageNum
-                      ? "bg-primary-500 text-white"
-                      : "bg-white border border-border-500 text-secondary-500"
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage >= totalPages}
-            className="flex items-center gap-2 text-sm text-neutral-500 disabled:opacity-50"
-          >
-            Next Page →
-          </button>
-
-          <p className="text-sm text-neutral-500">
-            Showing {professionals.length} of {totalProfessionals} professionals
-          </p>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalProfessionals}
+          shownItems={professionals.length}
+          itemLabel="professionals"
+          onPageChange={setCurrentPage}
+        />
       )}
     </div>
   );
@@ -263,12 +174,10 @@ export default function ProfessionalsPage() {
 function ProfessionalRow({
   professional,
   router,
-  getStatusColor,
   getSubscriptionColor,
 }: {
   professional: Professional;
   router: ReturnType<typeof useRouter>;
-  getStatusColor: (status: string) => string;
   getSubscriptionColor: (subscription: string) => string;
 }) {
 
@@ -276,11 +185,7 @@ function ProfessionalRow({
     <tr className="hover:bg-neutral-50">
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
-            <span className="text-sm font-medium text-secondary-500">
-              {professional.initials}
-            </span>
-          </div>
+          <Avatar initials={professional.initials} />
           <div className="flex flex-col">
             <p className="text-sm font-medium text-secondary-500">
               {professional.name}
@@ -304,15 +209,7 @@ function ProfessionalRow({
         </div>
       </td>
       <td className="px-6 py-4">
-        <div className="flex items-center gap-1">
-          <span className="text-warning-500">★</span>
-          <span className="text-sm text-secondary-500">
-            {professional.rating.toFixed(1)}
-          </span>
-          <span className="text-xs text-neutral-500">
-            ({professional.reviewCount})
-          </span>
-        </div>
+        <Rating value={professional.rating} reviewCount={professional.reviewCount} maxStars={1} />
       </td>
       <td className="px-6 py-4">
         <span
@@ -324,7 +221,7 @@ function ProfessionalRow({
         </span>
       </td>
       <td className="px-6 py-4">
-        <span className={`text-sm ${getStatusColor(professional.status)}`}>
+        <span className={`text-sm ${getStatusTextColor(professional.status)}`}>
           {professional.status}
         </span>
       </td>

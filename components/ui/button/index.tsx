@@ -7,7 +7,6 @@ interface ButtonProps  extends ButtonHTMLAttributes<HTMLButtonElement> {
     fullWidth?: boolean 
     loading?: boolean   
     disabled?: boolean  
-    onClick?: () => void 
     type?: 'button' | 'submit' | 'reset'
     children: React.ReactNode
     className?: string   

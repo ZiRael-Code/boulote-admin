@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { Search, ChevronDown, Edit, Archive, Trash2 } from "lucide-react";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { StatCard } from "@/components/ui/stat-card";
+import { Tabs } from "@/components/ui/tabs";
 import { useQuizDashboard, useQuizzes, useQuiz, useArchiveQuiz, useDeleteQuiz } from "@/hooks/use-quizzes";
 import { formatRelativeTime } from "@/lib/utils/format-date";
 import type { Quiz } from "@/lib/types/quiz";
@@ -37,78 +42,18 @@ export default function QuizzesPage() {
 
   const quizzes = quizzesData?.content || [];
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Active":
-        return (
-          <span className="px-2 py-1 bg-success-50 text-success-800 rounded-[15px] text-sm font-normal">
-            Active
-          </span>
-        );
-      case "Draft":
-        return (
-          <span className="px-2 py-1 bg-warning-50 text-warning-800 rounded-[15px] text-sm font-normal">
-            Draft
-          </span>
-        );
-      case "Archived":
-        return (
-          <span className="px-2 py-1 bg-neutral-100 text-neutral-700 rounded-[15px] text-sm font-normal">
-            Archived
-          </span>
-        );
-      default:
-        return (
-          <span className="px-2 py-1 bg-neutral-100 text-neutral-700 rounded-[15px] text-sm font-normal">
-            {status}
-          </span>
-        );
-    }
-  };
-
   return (
     <div className="flex flex-col gap-6 px-4 py-8 lg:pl-16 lg:pr-8 lg:py-16">
       <h1 className="text-3xl font-bold text-secondary-500">Quiz Management</h1>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-border-500 rounded-md p-6 flex flex-col items-center py-6">
-          <p className="text-4xl font-bold text-primary-500 mb-2">
-            {isLoadingDashboard ? "..." : stats?.totalQuizzes || 0}
-          </p>
-          <p className="text-base font-normal text-secondary-500 text-center">
-            Total Quizzes
-          </p>
-        </div>
-        <div className="bg-white border border-border-500 rounded-md p-6 flex flex-col items-center py-6">
-          <p className="text-4xl font-bold text-primary-500 mb-2">
-            {isLoadingDashboard ? "..." : stats?.activeQuizzes || 0}
-          </p>
-          <p className="text-base font-normal text-secondary-500 text-center">
-            Active Quizzes
-          </p>
-        </div>
-        <div className="bg-white border border-border-500 rounded-md p-6 flex flex-col items-center py-6">
-          <p className="text-4xl font-bold text-primary-500 mb-2">
-            {isLoadingDashboard ? "..." : stats?.totalAttempts || 0}
-          </p>
-          <p className="text-base font-normal text-secondary-500 text-center">
-            Total Attempts
-          </p>
-        </div>
-        <div className="bg-white border border-border-500 rounded-md p-6 flex flex-col items-center py-6">
-          <p className="text-4xl font-bold text-primary-500 mb-2">
-            {isLoadingDashboard ? "..." : `${stats?.averagePassRate || 0}%`}
-          </p>
-          <p className="text-base font-normal text-secondary-500 text-center">
-            Avg. Pass Rate
-          </p>
-        </div>
+        <StatCard value={isLoadingDashboard ? "..." : stats?.totalQuizzes || 0} label="Total Quizzes" />
+        <StatCard value={isLoadingDashboard ? "..." : stats?.activeQuizzes || 0} label="Active Quizzes" />
+        <StatCard value={isLoadingDashboard ? "..." : stats?.totalAttempts || 0} label="Total Attempts" />
+        <StatCard value={isLoadingDashboard ? "..." : `${stats?.averagePassRate || 0}%`} label="Avg. Pass Rate" />
       </div>
 
-      {/* Main Content - Two Column Layout */}
       <div className="flex gap-6">
-        {/* Left Panel - Quiz Library */}
         <div className="flex flex-col gap-6 flex-1">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-secondary-500">Quiz Library</h2>
@@ -128,7 +73,6 @@ export default function QuizzesPage() {
             </div>
           </div>
 
-        {/* Search and Filters */}
         <div className="flex gap-4 items-center">
           <div className="flex-1 max-w-md">
             <Input
@@ -171,15 +115,10 @@ export default function QuizzesPage() {
           </div>
         </div>
 
-          {/* Quiz List */}
           {isLoadingQuizzes ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            </div>
+            <LoadingSpinner />
           ) : quizzes.length === 0 ? (
-            <div className="bg-white border border-border-500 rounded-md p-12 text-center">
-              <p className="text-neutral-500 text-lg">No quizzes found</p>
-            </div>
+            <EmptyState message="No quizzes found" />
           ) : (
             <div className="flex flex-col gap-4">
               {quizzes.map((quiz) => (
@@ -203,7 +142,7 @@ export default function QuizzesPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    {getStatusBadge(quiz.status)}
+                    <StatusBadge status={quiz.status} className="rounded-[15px] text-sm font-normal" />
                     <Button
                       variant="outline"
                       onClick={(e) => {
@@ -221,13 +160,10 @@ export default function QuizzesPage() {
           )}
         </div>
 
-        {/* Right Panel - Quiz Details */}
         {selectedQuizId && (
           <div className="w-[500px] shrink-0">
             {isLoadingSelectedQuiz ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
-              </div>
+              <LoadingSpinner />
             ) : selectedQuiz ? (
               <QuizDetailsPanel
                 quiz={selectedQuiz}
@@ -277,16 +213,13 @@ function QuizDetailsPanel({
 
   return (
     <div className="bg-white border border-border-500 rounded-md p-6 flex flex-col gap-6 h-full overflow-y-auto">
-      {/* Quiz Title */}
       <h2 className="text-2xl font-bold text-secondary-500">{quiz.title}</h2>
 
-      {/* Metadata */}
       <div className="text-sm text-neutral-500">
         Created: {new Date(quiz.createdAt).toLocaleDateString()} • Last updated:{" "}
         {formatRelativeTime(quiz.lastUpdated)}
       </div>
 
-      {/* Summary Metrics */}
       <div className="flex gap-8">
         <div className="flex flex-col gap-2">
           <p className="text-2xl font-bold text-primary-500">
@@ -302,7 +235,6 @@ function QuizDetailsPanel({
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-4">
         <Button variant="success" onClick={onSchedule} className="flex-1">
           Schedule New Session
@@ -312,41 +244,16 @@ function QuizDetailsPanel({
         </Button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 border-b border-border-500">
-        <button
-          onClick={() => setActiveTab("overview")}
-          className={`px-4 py-2 border-b-2 transition-colors ${
-            activeTab === "overview"
-              ? "border-primary-500 text-primary-500"
-              : "border-transparent text-secondary-500"
-          }`}
-        >
-          Overview
-        </button>
-        <button
-          onClick={() => setActiveTab("schedule")}
-          className={`px-4 py-2 border-b-2 transition-colors ${
-            activeTab === "schedule"
-              ? "border-primary-500 text-primary-500"
-              : "border-transparent text-secondary-500"
-          }`}
-        >
-          Schedule
-        </button>
-        <button
-          onClick={() => setActiveTab("settings")}
-          className={`px-4 py-2 border-b-2 transition-colors ${
-            activeTab === "settings"
-              ? "border-primary-500 text-primary-500"
-              : "border-transparent text-secondary-500"
-          }`}
-        >
-          Settings
-        </button>
-      </div>
+      <Tabs
+        tabs={[
+          { value: "overview" as const, label: "Overview" },
+          { value: "schedule" as const, label: "Schedule" },
+          { value: "settings" as const, label: "Settings" },
+        ]}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
-      {/* Tab Content */}
       <div className="flex flex-col gap-6">
         {activeTab === "overview" && <OverviewTabContent quiz={quiz} />}
         {activeTab === "schedule" && (
@@ -365,7 +272,6 @@ function QuizDetailsPanel({
         )}
       </div>
 
-      {/* Bottom Actions */}
       <div className="flex gap-4 justify-end pt-6 border-t border-border-500 mt-auto">
         <Button variant="secondary" onClick={onArchive}>
           <Archive className="w-4 h-4 mr-2" />
@@ -383,7 +289,6 @@ function QuizDetailsPanel({
 function OverviewTabContent({ quiz }: { quiz: any }) {
   return (
     <div className="flex flex-col gap-6">
-      {/* Description */}
       <div className="flex flex-col gap-2">
         <h3 className="text-lg font-semibold text-secondary-500">Description</h3>
         <p className="text-base text-neutral-500">
@@ -392,7 +297,6 @@ function OverviewTabContent({ quiz }: { quiz: any }) {
         </p>
       </div>
 
-      {/* Quiz Details */}
       <div className="flex flex-col gap-2">
         <h3 className="text-lg font-semibold text-secondary-500">Quiz Details</h3>
         <div className="flex flex-col gap-2 text-base text-neutral-500">
@@ -405,7 +309,6 @@ function OverviewTabContent({ quiz }: { quiz: any }) {
         </div>
       </div>
 
-      {/* Recent Activity */}
       <div className="flex flex-col gap-2">
         <h3 className="text-lg font-semibold text-secondary-500">Recent Activity</h3>
         <div className="flex flex-col gap-2">

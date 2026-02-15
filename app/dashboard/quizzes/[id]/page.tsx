@@ -57,7 +57,6 @@ export default function QuizDetailsPage() {
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 lg:pl-16 lg:pr-8 lg:py-16">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => router.back()}
@@ -68,13 +67,11 @@ export default function QuizDetailsPage() {
         <h1 className="text-3xl font-bold text-secondary-500">{quiz.title}</h1>
       </div>
 
-      {/* Metadata */}
       <div className="text-sm text-neutral-500">
         Created: {new Date(quiz.createdAt).toLocaleDateString()} • Last updated:{" "}
         {formatRelativeTime(quiz.lastUpdated)}
       </div>
 
-      {/* Summary Metrics */}
       <div className="flex gap-8">
         <div className="flex flex-col gap-2">
           <p className="text-2xl font-bold text-primary-500">
@@ -90,7 +87,6 @@ export default function QuizDetailsPage() {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-4">
         <Button
           variant="success"
@@ -106,7 +102,6 @@ export default function QuizDetailsPage() {
         </Button>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-4 border-b border-border-500">
         <button
           onClick={() => setActiveTab("overview")}
@@ -140,7 +135,6 @@ export default function QuizDetailsPage() {
         </button>
       </div>
 
-      {/* Tab Content */}
       <div className="flex flex-col gap-6">
         {activeTab === "overview" && (
           <OverviewTab quiz={quiz} />
@@ -153,7 +147,6 @@ export default function QuizDetailsPage() {
         )}
       </div>
 
-      {/* Bottom Actions */}
       <div className="flex gap-4 justify-end pt-6 border-t border-border-500">
         <Button variant="secondary" onClick={handleArchive}>
           <Archive className="w-4 h-4 mr-2" />
@@ -171,7 +164,6 @@ export default function QuizDetailsPage() {
 function OverviewTab({ quiz }: { quiz: any }) {
   return (
     <div className="flex flex-col gap-6">
-      {/* Description */}
       <div className="flex flex-col gap-2">
         <h3 className="text-lg font-semibold text-secondary-500">Description</h3>
         <p className="text-base text-neutral-500">
@@ -180,7 +172,6 @@ function OverviewTab({ quiz }: { quiz: any }) {
         </p>
       </div>
 
-      {/* Quiz Details */}
       <div className="flex flex-col gap-2">
         <h3 className="text-lg font-semibold text-secondary-500">Quiz Details</h3>
         <div className="flex flex-col gap-2 text-base text-neutral-500">
@@ -193,7 +184,6 @@ function OverviewTab({ quiz }: { quiz: any }) {
         </div>
       </div>
 
-      {/* Recent Activity */}
       <div className="flex flex-col gap-2">
         <h3 className="text-lg font-semibold text-secondary-500">Recent Activity</h3>
         <div className="flex flex-col gap-2">
@@ -239,7 +229,6 @@ function SettingsTab({ quiz }: { quiz: any }) {
       <p className="text-base text-neutral-500">
         Quiz settings and configuration options will be displayed here.
       </p>
-      {/* Add settings form here */}
     </div>
   );
 }

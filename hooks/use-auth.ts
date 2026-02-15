@@ -6,15 +6,8 @@ import {
   LoginRequest,
 } from "@/lib/api/services/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
-
-export type ApiError = {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-  message?: string;
-};
+import type { ApiError } from "@/lib/types/api";
+import { getErrorMessage } from "@/lib/types/api";
 
 export const useAuth = () => {
   const router = useRouter();
@@ -30,7 +23,7 @@ export const useAuth = () => {
           email: data.email,
           firstName: data.user.firstName,
           lastName: data.user.lastName,
-          role: data.roles[0] as "ADMIN" | "SUPER_ADMIN",
+          role: data.roles[0] === "SUPER_ADMIN" ? "SUPER_ADMIN" : "ADMIN",
         },
         data.accessToken
       );
@@ -38,7 +31,7 @@ export const useAuth = () => {
       router.push("/dashboard");
     },
     onError: (error: ApiError) => {
-      toast.error(error?.response?.data?.message || "Login failed");
+      toast.error(getErrorMessage(error, "Login failed"));
     },
   });
 
@@ -50,11 +43,12 @@ export const useAuth = () => {
       toast.success("Logged out successfully");
       router.push("/auth/login");
     },
-    onError: (error: ApiError) => {
-      console.log(error, "error");
+    onError: () => {
+      clearAuth();
+      queryClient.clear();
+      router.push("/auth/login");
     },
   });
-
 
   return {
     login: loginMutation.mutate,
@@ -63,4 +57,3 @@ export const useAuth = () => {
     loginError: loginMutation.error,
   };
 };
-

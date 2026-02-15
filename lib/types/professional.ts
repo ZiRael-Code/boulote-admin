@@ -1,3 +1,5 @@
+import type { PaginatedResponse } from "./api";
+
 export type ProfessionalStatus = "PENDING" | "ACTIVE" | "INACTIVE";
 
 export type ProfessionalRole = "OPERATIONS" | "DEVELOPER" | "DESIGNER" | "OTHER";
@@ -34,34 +36,7 @@ export type ProfessionalsDashboardResponse = {
   stats: ProfessionalsStats;
 };
 
-export type SortConfig = {
-  sorted: boolean;
-  unsorted: boolean;
-  empty: boolean;
-};
-
-export type Pageable = {
-  pageNumber: number;
-  pageSize: number;
-  sort: SortConfig;
-  offset: number;
-  paged: boolean;
-  unpaged: boolean;
-};
-
-export type ProfessionalsResponse = {
-  content: Professional[];
-  pageable: Pageable;
-  last: boolean;
-  totalPages: number;
-  totalElements: number;
-  numberOfElements: number;
-  first: boolean;
-  size: number;
-  number: number;
-  sort: SortConfig;
-  empty: boolean;
-};
+export type ProfessionalsResponse = PaginatedResponse<Professional>;
 
 export type PendingApproval = {
   id: number;

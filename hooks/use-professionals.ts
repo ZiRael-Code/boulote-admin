@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { useQuery } from "@tanstack/react-query";
+import { useMutationWithToast } from "./use-mutation-with-toast";
 import {
   getProfessionalsDashboard,
   getProfessionals,
@@ -37,20 +37,13 @@ export function usePendingApprovals(enabled = true) {
 }
 
 export function useApproveProfessional() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: (id: number) => approveProfessional(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["professionals", "pending"] });
-      queryClient.invalidateQueries({ queryKey: ["professionals", "dashboard"] });
-      toast.success("Professional approved successfully");
-    },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to approve professional"
-      );
-    },
+    successMessage: "Professional approved successfully",
+    errorMessage: "Failed to approve professional",
+    invalidateKeys: [
+      ["professionals", "pending"],
+      ["professionals", "dashboard"],
+    ],
   });
 }
-

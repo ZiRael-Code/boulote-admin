@@ -1,3 +1,5 @@
+import type { PaginatedResponse } from "./api";
+
 export type CompanyStatus = "Active" | "Inactive" | "Pending" | "IN_REVIEW";
 
 export type CompanySize = "Small" | "Medium" | "Large";
@@ -48,34 +50,7 @@ export type CompaniesDashboardResponse = {
   stats: CompanyStats;
 };
 
-export type SortConfig = {
-  sorted: boolean;
-  unsorted: boolean;
-  empty: boolean;
-};
-
-export type Pageable = {
-  pageNumber: number;
-  pageSize: number;
-  sort: SortConfig;
-  offset: number;
-  paged: boolean;
-  unpaged: boolean;
-};
-
-export type CompaniesResponse = {
-  content: Company[];
-  pageable: Pageable;
-  last: boolean;
-  totalPages: number;
-  totalElements: number;
-  numberOfElements: number;
-  first: boolean;
-  size: number;
-  number: number;
-  sort: SortConfig;
-  empty: boolean;
-};
+export type CompaniesResponse = PaginatedResponse<Company>;
 
 export type PendingCompanyApproval = {
   id: number;

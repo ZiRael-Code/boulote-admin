@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { useQuery } from "@tanstack/react-query";
+import { useMutationWithToast } from "./use-mutation-with-toast";
 import {
   getPendingJobs,
   getOngoingJobs,
@@ -36,7 +36,6 @@ export function useOngoingJobs(enabled = true) {
   });
 }
 
-
 export function useCompletedJobs(enabled = true) {
   return useQuery<JobsResponse>({
     queryKey: ["jobs", "completed"],
@@ -46,27 +45,15 @@ export function useCompletedJobs(enabled = true) {
 }
 
 export function useStartAIShortlisting() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: (projectId: number) => startAIShortlisting(projectId),
-    onSuccess: (_, projectId) => {
-      queryClient.invalidateQueries({
-        queryKey: ["ai-shortlisting", "status", projectId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["ai-shortlisting", "active-processes"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["jobs", "pending"],
-      });
-      toast.success("AI shortlisting started successfully");
-    },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to start AI shortlisting"
-      );
-    },
+    successMessage: "AI shortlisting started successfully",
+    errorMessage: "Failed to start AI shortlisting",
+    invalidateKeys: (_, projectId) => [
+      ["ai-shortlisting", "status", String(projectId)],
+      ["ai-shortlisting", "active-processes"],
+      ["jobs", "pending"],
+    ],
   });
 }
 
@@ -81,7 +68,6 @@ export function useAIShortlistingStatus(
     enabled: enabled && !!projectId,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      // Poll every 3 seconds if processing, stop polling if completed or failed
       if (status === "processing" || status === "pending") {
         return refetchInterval || 3000;
       }
@@ -95,7 +81,7 @@ export function useAIShortlistingResults(projectId: number, enabled = true) {
     queryKey: ["ai-shortlisting", "results", projectId],
     queryFn: () => getAIShortlistingResults(projectId),
     enabled: enabled && !!projectId,
-    retry: false, // Don't retry on 400 errors
+    retry: false,
   });
 }
 
@@ -104,61 +90,35 @@ export function useActiveAIShortlistingProcesses(enabled = true) {
     queryKey: ["ai-shortlisting", "active-processes"],
     queryFn: getActiveAIShortlistingProcesses,
     enabled,
-    refetchInterval: 5000, // Poll every 5 seconds for active processes
+    refetchInterval: 5000,
   });
 }
 
 export function useAssignSelectedProfessional() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: (data: AssignProfessionalRequest) =>
       assignSelectedProfessional(data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["ai-shortlisting", "results", variables.projectId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["jobs", "ai-review"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["jobs", "pending"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["jobs", "ongoing"],
-      });
-      toast.success("Professional assigned successfully");
-    },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to assign professional"
-      );
-    },
+    successMessage: "Professional assigned successfully",
+    errorMessage: "Failed to assign professional",
+    invalidateKeys: (_, variables) => [
+      ["ai-shortlisting", "results", String(variables.projectId)],
+      ["jobs", "ai-review"],
+      ["jobs", "pending"],
+      ["jobs", "ongoing"],
+    ],
   });
 }
 
 export function useRejectAllAndManuallySelect() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: (data: RejectAllRequest) => rejectAllAndManuallySelect(data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["ai-shortlisting", "results", variables.projectId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["jobs", "ai-review"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["jobs", "pending"],
-      });
-      toast.success("All professionals rejected. You can now manually select.");
-    },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to reject professionals"
-      );
-    },
+    successMessage:
+      "All professionals rejected. You can now manually select.",
+    errorMessage: "Failed to reject professionals",
+    invalidateKeys: (_, variables) => [
+      ["ai-shortlisting", "results", String(variables.projectId)],
+      ["jobs", "ai-review"],
+      ["jobs", "pending"],
+    ],
   });
 }
-

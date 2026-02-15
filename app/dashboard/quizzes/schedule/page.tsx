@@ -39,7 +39,6 @@ export default function ScheduleQuizSessionsPage() {
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 lg:pl-16 lg:pr-8 lg:py-16">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => router.back()}
@@ -52,7 +51,6 @@ export default function ScheduleQuizSessionsPage() {
         </h1>
       </div>
 
-      {/* Schedule Type Buttons */}
       <div className="flex gap-4">
         <Button
           variant={scheduleType === "today" ? "primary" : "secondary"}
@@ -80,7 +78,6 @@ export default function ScheduleQuizSessionsPage() {
         </Button>
       </div>
 
-      {/* View Tabs */}
       <div className="flex gap-4 border-b border-border-500">
         <button
           onClick={() => setView("calendar")}
@@ -114,7 +111,6 @@ export default function ScheduleQuizSessionsPage() {
         </button>
       </div>
 
-      {/* Calendar View */}
       {view === "calendar" && (
         <div className="flex flex-col gap-6">
           <div className="bg-white border border-border-500 rounded-md p-6">
@@ -138,7 +134,6 @@ export default function ScheduleQuizSessionsPage() {
                   {day}
                 </div>
               ))}
-              {/* Calendar days would be rendered here */}
               <div className="col-span-7 text-center text-neutral-500 py-8">
                 Calendar grid implementation would go here
               </div>
@@ -146,8 +141,6 @@ export default function ScheduleQuizSessionsPage() {
           </div>
         </div>
       )}
-
-      {/* Today's Schedule */}
       <div className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold text-secondary-500">
           Today Schedule - {new Date().toLocaleDateString("en-US", {
@@ -210,7 +203,6 @@ export default function ScheduleQuizSessionsPage() {
         </div>
       </div>
 
-      {/* Statistics */}
       <div className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold text-secondary-500">
           Scheduling statistics

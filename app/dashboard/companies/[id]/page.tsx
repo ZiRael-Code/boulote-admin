@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ChevronLeft, FileText, MapPin, Users, Calendar, Globe } from "lucide-react";
+import { FileText, MapPin, Users, Calendar, Globe } from "lucide-react";
 import Button from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Avatar } from "@/components/ui/avatar";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { BackButton } from "@/components/ui/back-button";
+import { Tabs } from "@/components/ui/tabs";
 import { useCompanyProfile } from "@/hooks/use-companies";
 import { formatDate, formatRelativeTime } from "@/lib/utils/format-date";
+import { getInitials } from "@/lib/utils/string-helpers";
 
 type TabType = "overview" | "documents" | "team-details" | "history";
 
@@ -20,12 +27,7 @@ export default function CompanyProfilePage() {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-8 px-8 py-8">
-        <div className="flex items-center justify-center py-32">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-neutral-500">Loading company profile...</p>
-          </div>
-        </div>
+        <LoadingSpinner message="Loading company profile..." className="py-32" />
       </div>
     );
   }
@@ -33,58 +35,17 @@ export default function CompanyProfilePage() {
   if (!profile) {
     return (
       <div className="flex flex-col gap-8 px-8 py-8">
-        <div className="flex items-center justify-center py-32">
-          <p className="text-neutral-500 text-lg">Company not found</p>
-        </div>
+        <EmptyState message="Company not found" className="py-32" />
       </div>
     );
   }
 
-  const initials = profile.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
-  const getStatusBadge = () => {
-    switch (profile.status) {
-      case "Active":
-        return (
-          <span className="px-3 py-1 bg-success-50 text-success-700 rounded text-sm font-medium">
-            Active
-          </span>
-        );
-      case "Inactive":
-        return (
-          <span className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded text-sm font-medium">
-            Inactive
-          </span>
-        );
-      case "Pending":
-        return (
-          <span className="px-3 py-1 bg-warning-50 text-warning-700 rounded text-sm font-medium">
-            Pending
-          </span>
-        );
-      default:
-        return (
-          <span className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded text-sm font-medium">
-            {profile.status}
-          </span>
-        );
-    }
-  };
+  const initials = getInitials(profile.name);
 
   return (
     <div className="flex flex-col gap-8 px-8 py-8">
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 rounded-md"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
+        <BackButton />
         <h1 className="text-2xl font-semibold text-secondary-500">
           Company Profile
         </h1>
@@ -92,11 +53,7 @@ export default function CompanyProfilePage() {
 
       <div className="flex items-start justify-between">
         <div className="flex gap-6">
-          <div className="w-[100px] h-[100px] rounded-full bg-primary-50 flex items-center justify-center shrink-0">
-            <span className="text-2xl font-medium text-secondary-500">
-              {initials}
-            </span>
-          </div>
+          <Avatar initials={initials} size="xl" />
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl font-semibold text-secondary-500">
               {profile.name}
@@ -119,7 +76,7 @@ export default function CompanyProfilePage() {
               )}
             </div>
             <div className="flex items-center gap-3 mt-2">
-              {getStatusBadge()}
+              <StatusBadge status={profile.status} className="px-3 py-1 rounded text-sm" />
               <span className="text-sm text-neutral-500">
                 {profile.plan} Plan
               </span>
@@ -140,48 +97,16 @@ export default function CompanyProfilePage() {
         </div>
       </div>
 
-      <div className="border-b border-border-500 flex gap-8">
-        <button
-          onClick={() => setActiveTab("overview")}
-          className={`px-6 py-4 border-b-2 transition-colors ${
-            activeTab === "overview"
-              ? "border-primary-500 text-primary-500"
-              : "border-transparent text-secondary-500"
-          }`}
-        >
-          <span className="text-base font-normal">Overview</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("documents")}
-          className={`px-6 py-4 border-b-2 transition-colors ${
-            activeTab === "documents"
-              ? "border-primary-500 text-primary-500"
-              : "border-transparent text-secondary-500"
-          }`}
-        >
-          <span className="text-base font-normal">Documents</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("team-details")}
-          className={`px-6 py-4 border-b-2 transition-colors ${
-            activeTab === "team-details"
-              ? "border-primary-500 text-primary-500"
-              : "border-transparent text-secondary-500"
-          }`}
-        >
-          <span className="text-base font-normal">Team Details</span>
-        </button>
-        <button
-          onClick={() => setActiveTab("history")}
-          className={`px-6 py-4 border-b-2 transition-colors ${
-            activeTab === "history"
-              ? "border-primary-500 text-primary-500"
-              : "border-transparent text-secondary-500"
-          }`}
-        >
-          <span className="text-base font-normal">History</span>
-        </button>
-      </div>
+      <Tabs
+        tabs={[
+          { value: "overview" as const, label: "Overview" },
+          { value: "documents" as const, label: "Documents" },
+          { value: "team-details" as const, label: "Team Details" },
+          { value: "history" as const, label: "History" },
+        ]}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       {activeTab === "overview" && <OverviewTab profile={profile} />}
       {activeTab === "documents" && <DocumentsTab profile={profile} />}
@@ -373,22 +298,12 @@ function TeamDetailsTab({ profile }: { profile: any }) {
         <div className="flex flex-col gap-4">
           {profile.teamMembers && profile.teamMembers.length > 0 ? (
             profile.teamMembers.map((member: any, index: number) => {
-              const initials = member.name
-                .split(" ")
-                .map((n: string) => n[0])
-                .join("")
-                .toUpperCase()
-                .slice(0, 2);
               return (
                 <div
                   key={index}
                   className="flex items-center gap-4 p-4 border border-border-500 rounded-lg"
                 >
-                  <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-medium text-secondary-500">
-                      {initials}
-                    </span>
-                  </div>
+                  <Avatar initials={getInitials(member.name)} size="lg" />
                   <div className="flex-1">
                     <h3 className="text-base font-semibold text-secondary-500">
                       {member.name}

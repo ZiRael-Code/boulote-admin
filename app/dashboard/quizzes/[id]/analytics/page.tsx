@@ -33,7 +33,6 @@ export default function QuizAnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 lg:pl-16 lg:pr-8 lg:py-16">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
@@ -49,7 +48,6 @@ export default function QuizAnalyticsPage() {
         <Button variant="secondary">Export</Button>
       </div>
 
-      {/* Performance by Question */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-secondary-500">
@@ -92,7 +90,6 @@ export default function QuizAnalyticsPage() {
         )}
       </div>
 
-      {/* Recent Attempts */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-secondary-500">Recent Attempts</h2>

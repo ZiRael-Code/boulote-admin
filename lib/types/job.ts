@@ -1,3 +1,5 @@
+import type { PaginatedResponse } from "./api";
+
 export type JobStatus = "PENDING" | "ONGOING" | "COMPLETED" | "AI_REVIEW";
 
 export type Urgency = "Low" | "Normal" | "High";
@@ -24,36 +26,9 @@ export type Job = {
   assignedProfessionalName: string | null;
 };
 
-export type SortConfig = {
-  sorted: boolean;
-  unsorted: boolean;
-  empty: boolean;
-};
+export type JobsResponse = PaginatedResponse<Job>;
 
-export type Pageable = {
-  pageNumber: number;
-  pageSize: number;
-  sort: SortConfig;
-  offset: number;
-  paged: boolean;
-  unpaged: boolean;
-};
-
-export type JobsResponse = {
-  content: Job[];
-  pageable: Pageable;
-  last: boolean;
-  totalPages: number;
-  totalElements: number;
-  numberOfElements: number;
-  first: boolean;
-  size: number;
-  number: number;
-  sort: SortConfig;
-  empty: boolean;
-};
-
-export type Professional = {
+export type ProfessionalProfile = {
   id: number;
   email: string;
   firstName: string;
@@ -66,11 +41,10 @@ export type Professional = {
   location: string | null;
   phoneNumber: string | null;
   successRate: number;
-  // Add other fields as needed
 };
 
 export type ShortlistedProfessional = {
-  professional: Professional;
+  professional: ProfessionalProfile;
   matchScore: number;
   scoreBreakdown: {
     profession: number;

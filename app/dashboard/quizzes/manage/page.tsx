@@ -57,7 +57,6 @@ export default function ManageQuizCategoriesPage() {
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 lg:pl-16 lg:pr-8 lg:py-16">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => router.back()}
@@ -68,7 +67,6 @@ export default function ManageQuizCategoriesPage() {
         <h1 className="text-3xl font-bold text-secondary-500">Manage Quiz</h1>
       </div>
 
-      {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white border border-border-500 rounded-md p-6 flex flex-col">
           <p className="text-4xl font-bold text-primary-500 mb-2">
@@ -114,7 +112,6 @@ export default function ManageQuizCategoriesPage() {
         </div>
       </div>
 
-      {/* Add Category */}
       <div className="flex gap-4 items-end">
         <div className="flex-1 max-w-md">
           <Input
@@ -135,7 +132,6 @@ export default function ManageQuizCategoriesPage() {
         </Button>
       </div>
 
-      {/* Category Tree */}
       <div className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold text-secondary-500">Category Tree</h2>
         {isLoadingCategories ? (

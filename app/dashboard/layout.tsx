@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/navigation/sidebar";
 import { MobileHeader } from "@/components/navigation/mobile-header";
+import { AuthGuard } from "@/components/auth-guard";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 export default function DashboardLayout({
   children,
@@ -14,12 +16,16 @@ export default function DashboardLayout({
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
-      <Sidebar isOpen={isSidebarOpen} onToggle={toggleSidebar} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <MobileHeader onMenuClick={toggleSidebar} />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+    <AuthGuard>
+      <div className="flex h-screen bg-white overflow-hidden">
+        <Sidebar isOpen={isSidebarOpen} onToggle={toggleSidebar} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <MobileHeader onMenuClick={toggleSidebar} />
+          <main className="flex-1 overflow-y-auto">
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </main>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

@@ -150,7 +150,6 @@ export default function CreateQuizPage() {
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 lg:pl-16 lg:pr-8 lg:py-16">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => router.back()}
@@ -161,7 +160,6 @@ export default function CreateQuizPage() {
         <h1 className="text-3xl font-bold text-secondary-500">Create new quiz</h1>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-4 border-b border-border-500">
         <button
           onClick={() => setActiveTab("basic-info")}
@@ -185,10 +183,8 @@ export default function CreateQuizPage() {
         </button>
       </div>
 
-      {/* Content */}
       {activeTab === "basic-info" ? (
         <div className="flex flex-col gap-8">
-          {/* Basic Information */}
           <div className="flex flex-col gap-6">
             <h2 className="text-xl font-semibold text-secondary-500">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -266,7 +262,6 @@ export default function CreateQuizPage() {
             </div>
           </div>
 
-          {/* Question Management */}
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-secondary-500">
@@ -351,7 +346,6 @@ export default function CreateQuizPage() {
             </Button>
           </div>
 
-          {/* Quiz Settings */}
           <div className="flex flex-col gap-6">
             <h2 className="text-xl font-semibold text-secondary-500">Quiz Settings</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -501,7 +495,6 @@ export default function CreateQuizPage() {
         </div>
       )}
 
-      {/* Bottom Actions */}
       <div className="flex gap-4 justify-end pt-6 border-t border-border-500">
         <Button variant="secondary" onClick={handleSaveDraft}>
           Save As Draft

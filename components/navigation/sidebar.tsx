@@ -1,17 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import {
-  LayoutDashboard,
-  Briefcase,
-  Users,
-  Building2,
-  MessageSquare,
-  Settings,
-  ClipboardList,
-  Bell,
-  Menu,
-} from "lucide-react";
 import Image from "next/image";
 
 type SidebarProps = {

@@ -78,7 +78,6 @@ export default function QuizSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 lg:pl-16 lg:pr-8 lg:py-16">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => router.back()}
@@ -89,7 +88,6 @@ export default function QuizSettingsPage() {
         <h1 className="text-3xl font-bold text-secondary-500">Settings</h1>
       </div>
 
-      {/* General Configuration */}
       <div className="flex flex-col gap-6">
         <h2 className="text-xl font-semibold text-secondary-500">
           General Configuration
@@ -152,7 +150,6 @@ export default function QuizSettingsPage() {
         </div>
       </div>
 
-      {/* Questions type enabled */}
       <div className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold text-secondary-500">
           Questions type enabled
@@ -177,7 +174,6 @@ export default function QuizSettingsPage() {
         </div>
       </div>
 
-      {/* Access control */}
       <div className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold text-secondary-500">Access control</h2>
         <div className="flex flex-col gap-2">
@@ -234,7 +230,6 @@ export default function QuizSettingsPage() {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-4 justify-end pt-6 border-t border-border-500">
         <Button variant="secondary" onClick={handleReset}>
           Reset To Defaults
