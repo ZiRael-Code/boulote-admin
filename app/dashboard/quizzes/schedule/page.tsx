@@ -1,25 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/button";
 import { useScheduledSessions } from "@/hooks/use-quizzes";
-import { formatRelativeTime } from "@/lib/utils/format-date";
 
 type ScheduleView = "calendar" | "list" | "upcoming";
 type ScheduleType = "today" | "week" | "recurring" | "bulk";
 
 export default function ScheduleQuizSessionsPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const quizId = searchParams.get("quizId");
-
   const [scheduleType, setScheduleType] = useState<ScheduleType>("today");
   const [view, setView] = useState<ScheduleView>("calendar");
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate] = useState(new Date());
 
-  const { data: sessions, isLoading } = useScheduledSessions(
+  const { data: sessions } = useScheduledSessions(
     {
       date: selectedDate.toISOString(),
       view,
@@ -202,8 +198,9 @@ export default function ScheduleQuizSessionsPage() {
           ))}
         </div>
       </div>
-
+\
       <div className="flex flex-col gap-4">
+ 
         <h2 className="text-xl font-semibold text-secondary-500">
           Scheduling statistics
         </h2>

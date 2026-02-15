@@ -59,11 +59,11 @@ export default function CreateQuizPage() {
 
   const totalQuestions = formData.questions?.length || 1;
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean | undefined | string[] | Record<string, unknown>) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleQuestionChange = (field: string, value: any) => {
+  const handleQuestionChange = (field: string, value: string | number | string[]) => {
     setFormData((prev) => {
       const questions = [...(prev.questions || [])];
       questions[currentQuestionIndex] = {
@@ -204,7 +204,7 @@ export default function CreateQuizPage() {
                 ]}
                 value={formData.difficulty || "BEGINNER"}
                 onChange={(e) =>
-                  handleInputChange("difficulty", e.target.value as any)
+                  handleInputChange("difficulty", e.target.value)
                 }
                 fullWidth
               />
@@ -285,7 +285,7 @@ export default function CreateQuizPage() {
               ]}
               value={currentQuestion.questionType}
               onChange={(e) =>
-                handleQuestionChange("questionType", e.target.value as any)
+                handleQuestionChange("questionType", e.target.value)
               }
               fullWidth
             />
@@ -421,7 +421,7 @@ export default function CreateQuizPage() {
                   { value: "RANDOM", label: "Random" },
                 ]}
                 value={formData.questionOrder || "SEQUENTIAL"}
-                onChange={(e) => handleInputChange("questionOrder", e.target.value as any)}
+                onChange={(e) => handleInputChange("questionOrder", e.target.value)}
                 fullWidth
               />
               <Select
@@ -432,7 +432,7 @@ export default function CreateQuizPage() {
                   { value: "NEVER", label: "Never" },
                 ]}
                 value={formData.showResult || "AFTER_COMPLETION"}
-                onChange={(e) => handleInputChange("showResult", e.target.value as any)}
+                onChange={(e) => handleInputChange("showResult", e.target.value)}
                 fullWidth
               />
             </div>

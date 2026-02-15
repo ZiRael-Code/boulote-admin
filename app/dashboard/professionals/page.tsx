@@ -21,7 +21,6 @@ import type { Professional } from "@/lib/types/professional";
 export default function ProfessionalsPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
 
   const { data: dashboardData, isLoading: isLoadingStats } =
     useProfessionalsDashboard(true);

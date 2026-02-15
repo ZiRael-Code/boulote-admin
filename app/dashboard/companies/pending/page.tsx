@@ -14,6 +14,7 @@ import {
   useRejectCompany,
 } from "@/hooks/use-companies";
 import { formatRelativeTime } from "@/lib/utils/format-date";
+import type { PendingCompanyApproval } from "@/lib/types/company";
 
 export default function PendingCompanyApprovalsPage() {
   const router = useRouter();
@@ -136,7 +137,7 @@ function PendingCompanyCard({
   isApproving,
   isRejecting,
 }: {
-  company: any;
+  company: PendingCompanyApproval;
   onReview: () => void;
   onApprove: () => void;
   onReject: () => void;

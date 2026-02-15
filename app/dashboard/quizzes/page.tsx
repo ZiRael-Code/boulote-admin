@@ -12,7 +12,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { Tabs } from "@/components/ui/tabs";
 import { useQuizDashboard, useQuizzes, useQuiz, useArchiveQuiz, useDeleteQuiz } from "@/hooks/use-quizzes";
 import { formatRelativeTime } from "@/lib/utils/format-date";
-import type { Quiz } from "@/lib/types/quiz";
+import type { QuizDetails, QuizAttempt } from "@/lib/types/quiz";
 
 export default function QuizzesPage() {
   const router = useRouter();
@@ -203,7 +203,7 @@ function QuizDetailsPanel({
   onSchedule,
   onViewAnalytics,
 }: {
-  quiz: any;
+  quiz: QuizDetails;
   onArchive: () => void;
   onDelete: () => void;
   onSchedule: () => void;
@@ -286,7 +286,7 @@ function QuizDetailsPanel({
   );
 }
 
-function OverviewTabContent({ quiz }: { quiz: any }) {
+function OverviewTabContent({ quiz }: { quiz: QuizDetails }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
@@ -313,7 +313,7 @@ function OverviewTabContent({ quiz }: { quiz: any }) {
         <h3 className="text-lg font-semibold text-secondary-500">Recent Activity</h3>
         <div className="flex flex-col gap-2">
           {quiz.recentActivities && quiz.recentActivities.length > 0 ? (
-            quiz.recentActivities.map((activity: any, index: number) => (
+            quiz.recentActivities.map((activity: QuizAttempt, index: number) => (
               <div key={index} className="text-base text-neutral-500">
                 <span className="font-medium">{activity.professionalName}</span>{" "}
                 {activity.passed ? "passed" : "failed"} - Score: {activity.score}% •{" "}

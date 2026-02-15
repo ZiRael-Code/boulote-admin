@@ -12,7 +12,6 @@ type RatingProps = {
 export function Rating({
   value,
   reviewCount,
-  maxStars = 5,
   className,
 }: RatingProps) {
   return (

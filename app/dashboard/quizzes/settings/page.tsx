@@ -34,7 +34,7 @@ export default function QuizSettingsPage() {
     );
   }
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -45,11 +45,11 @@ export default function QuizSettingsPage() {
   const handleQuestionTypeToggle = (type: string) => {
     setFormData((prev) => {
       const types = [...(prev.enabledQuestionTypes || [])];
-      const index = types.indexOf(type as any);
+      const index = types.indexOf(type as typeof types[number]);
       if (index > -1) {
         types.splice(index, 1);
       } else {
-        types.push(type as any);
+        types.push(type as typeof types[number]);
       }
       return { ...prev, enabledQuestionTypes: types };
     });
@@ -164,7 +164,7 @@ export default function QuizSettingsPage() {
             <div key={type.value} className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={formData.enabledQuestionTypes?.includes(type.value as any)}
+                checked={formData.enabledQuestionTypes?.includes(type.value as typeof formData.enabledQuestionTypes[number])}
                 onChange={() => handleQuestionTypeToggle(type.value)}
                 className="w-5 h-5"
               />

@@ -1,7 +1,6 @@
 import axiosInstance from "../axios-config";
 import type {
   Quiz,
-  QuizStats,
   QuizDetails,
   QuizDashboardResponse,
   QuizCategory,

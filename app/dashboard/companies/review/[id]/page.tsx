@@ -10,6 +10,7 @@ import {
   useRejectCompany,
 } from "@/hooks/use-companies";
 import { formatDate } from "@/lib/utils/format-date";
+import type { CompanyProfile, CompanyDocument, TeamMember, RecentActivity } from "@/lib/types/company";
 
 type TabType = "company-info" | "documents" | "team-details" | "history";
 
@@ -156,7 +157,7 @@ function CompanyInfoTab({
   adminNotes,
   onAdminNotesChange,
 }: {
-  profile: any;
+  profile: CompanyProfile;
   adminNotes: string;
   onAdminNotesChange: (notes: string) => void;
 }) {
@@ -246,7 +247,7 @@ function CompanyInfoTab({
   );
 }
 
-function DocumentsTab({ profile }: { profile: any }) {
+function DocumentsTab({ profile }: { profile: CompanyProfile }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="bg-white border border-border-500 rounded-lg p-6">
@@ -255,7 +256,7 @@ function DocumentsTab({ profile }: { profile: any }) {
         </h2>
         <div className="flex flex-col gap-4">
           {profile.documents && profile.documents.length > 0 ? (
-            profile.documents.map((doc: any, index: number) => (
+            profile.documents.map((doc: CompanyDocument, index: number) => (
               <div
                 key={index}
                 className="flex items-center justify-between p-4 border border-border-500 rounded-lg"
@@ -294,7 +295,7 @@ function DocumentsTab({ profile }: { profile: any }) {
   );
 }
 
-function TeamDetailsTab({ profile }: { profile: any }) {
+function TeamDetailsTab({ profile }: { profile: CompanyProfile }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="bg-white border border-border-500 rounded-lg p-6">
@@ -303,7 +304,7 @@ function TeamDetailsTab({ profile }: { profile: any }) {
         </h2>
         <div className="flex flex-col gap-4">
           {profile.teamMembers && profile.teamMembers.length > 0 ? (
-            profile.teamMembers.map((member: any, index: number) => {
+            profile.teamMembers.map((member: TeamMember, index: number) => {
               const initials = member.name
                 .split(" ")
                 .map((n: string) => n[0])
@@ -343,7 +344,7 @@ function TeamDetailsTab({ profile }: { profile: any }) {
   );
 }
 
-function HistoryTab({ profile }: { profile: any }) {
+function HistoryTab({ profile }: { profile: CompanyProfile }) {
   const history = profile.history || {};
 
   return (
@@ -389,7 +390,7 @@ function HistoryTab({ profile }: { profile: any }) {
           </h2>
           <div className="flex flex-col gap-4">
             {history.recentActivities && history.recentActivities.length > 0 ? (
-              history.recentActivities.map((activity: any, index: number) => (
+              history.recentActivities.map((activity: RecentActivity, index: number) => (
                 <div
                   key={index}
                   className="flex flex-col gap-2 p-4 border border-border-500 rounded-lg"

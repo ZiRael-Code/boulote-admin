@@ -12,7 +12,7 @@ import {
   useAIShortlistingStatus,
   useAIShortlistingResults,
 } from "@/hooks/use-jobs";
-import type { Job, ShortlistingResult } from "@/lib/types/job";
+import type { Job } from "@/lib/types/job";
 import { formatRelativeTime } from "@/lib/utils/format-date";
 import { ShortlistingResultsModal } from "./shortlisting-modal";
 

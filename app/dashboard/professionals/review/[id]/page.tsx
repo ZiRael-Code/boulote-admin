@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, X, FileText } from "lucide-react";
+import { ChevronLeft, FileText } from "lucide-react";
 import Button from "@/components/ui/button";
 
 export default function ApplicationReviewPage() {
