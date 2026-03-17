@@ -224,7 +224,7 @@ function ScheduleTab({ quizId }: { quizId: number }) {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 function SettingsTab({ quiz }: { quiz: QuizDetails }) {
   return (
     <div className="flex flex-col gap-4">

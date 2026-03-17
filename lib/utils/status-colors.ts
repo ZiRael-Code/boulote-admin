@@ -1,23 +1,23 @@
 type StatusVariant = "success" | "warning" | "error" | "info" | "neutral";
 
 const STATUS_MAP: Record<string, StatusVariant> = {
-  // Professional statuses
+
   ACTIVE: "success",
   INACTIVE: "neutral",
   PENDING: "warning",
-  // Company statuses
+
   Active: "success",
   Inactive: "neutral",
   Pending: "warning",
   IN_REVIEW: "info",
-  // Quiz statuses
+
   Draft: "warning",
   Archived: "neutral",
-  // AI statuses
+
   processing: "warning",
   completed: "success",
   failed: "error",
-  // Job statuses
+
   ONGOING: "info",
   COMPLETED: "success",
   AI_REVIEW: "info",

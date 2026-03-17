@@ -26,24 +26,23 @@ export async function startAIShortlisting(projectId: number): Promise<void> {
 }
 
 export async function getAIShortlistingStatus(
-  projectId: number
+    projectId: number
 ): Promise<AIShortlistingStatusResponse> {
   const response = await axiosInstance.get<AIShortlistingStatusResponse>(
-    `/admin/ai-shortlisting/project/status/${projectId}`
+      `/admin/ai-shortlisting/project/status/${projectId}`
   );
   return response.data;
 }
 
 export async function getAIShortlistingResults(
-  projectId: number
+    projectId: number
 ): Promise<ShortlistingResult | null> {
   try {
     const response = await axiosInstance.get<ShortlistingResult>(
-      `/admin/ai-shortlisting/project/results/${projectId}`
+        `/admin/ai-shortlisting/project/results/${projectId}`
     );
     return response.data;
   } catch (error: unknown) {
-    // Handle 400 error as "no results" - this is expected when shortlisting is not completed
     const axiosError = error as { response?: { status?: number } };
     if (axiosError.response?.status === 400) {
       return null;
@@ -52,9 +51,14 @@ export async function getAIShortlistingResults(
   }
 }
 
+export async function getAIReviewJobs(): Promise<JobsResponse> {
+  const response = await axiosInstance.get<JobsResponse>("/admin/job/ai-review");
+  return response.data;
+}
+
 export async function getActiveAIShortlistingProcesses(): Promise<ActiveProcessesResponse> {
   const response = await axiosInstance.get<ActiveProcessesResponse>(
-    "/admin/ai-shortlisting/active-processes"
+      "/admin/ai-shortlisting/active-processes"
   );
   return response.data;
 }
@@ -66,11 +70,11 @@ export type AssignProfessionalRequest = {
 };
 
 export async function assignSelectedProfessional(
-  data: AssignProfessionalRequest
+    data: AssignProfessionalRequest
 ): Promise<void> {
   await axiosInstance.post(
-    "/admin/ai-shortlisting/assign-selected-professional",
-    data
+      "/admin/ai-shortlisting/assign-selected-professional",
+      data
   );
 }
 
@@ -81,11 +85,28 @@ export type RejectAllRequest = {
 };
 
 export async function rejectAllAndManuallySelect(
-  data: RejectAllRequest
+    data: RejectAllRequest
 ): Promise<void> {
   await axiosInstance.post(
-    "/admin/ai-shortlisting/reject-all-and-manually-select",
-    data
+      "/admin/ai-shortlisting/reject-all-and-manually-select",
+      data
   );
 }
 
+export type BulkShortlistResult = {
+  projectId: number;
+  status: "STARTED" | "FAILED";
+  jobId?: string;
+  title?: string;
+  error?: string;
+};
+
+export async function bulkStartAIShortlisting(
+    projectIds: number[]
+): Promise<BulkShortlistResult[]> {
+  const response = await axiosInstance.post<BulkShortlistResult[]>(
+      "/admin/ai-shortlisting/project/bulk-start",
+      projectIds
+  );
+  return response.data;
+}

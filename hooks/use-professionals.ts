@@ -5,11 +5,14 @@ import {
   getProfessionals,
   getPendingApprovals,
   approveProfessional,
+  getProfessionalProfile,
+  rejectProfessional,
 } from "@/lib/api/services/professionals";
 import type {
   ProfessionalsDashboardResponse,
   ProfessionalsResponse,
   PendingApprovalsResponse,
+  ProfessionalProfile,
 } from "@/lib/types/professional";
 
 export function useProfessionalsDashboard(enabled = true) {
@@ -20,11 +23,37 @@ export function useProfessionalsDashboard(enabled = true) {
   });
 }
 
-export function useProfessionals(enabled = true) {
+export function useProfessionalProfile(id: number, enabled = true) {
+  return useQuery<ProfessionalProfile>({
+    queryKey: ["professionals", "profile", id],
+    queryFn: () => getProfessionalProfile(id),
+    enabled: enabled && !!id,
+  });
+}
+
+export function useRejectProfessional() {
+  return useMutationWithToast({
+    mutationFn: (id: number) => rejectProfessional(id),
+    successMessage: "Professional rejected",
+    errorMessage: "Failed to reject professional",
+    invalidateKeys: [
+      ["professionals", "pending"],
+      ["professionals", "dashboard"],
+    ],
+  });
+}
+
+import type { ProfessionalsFilters } from "@/lib/api/services/professionals";
+
+export function useProfessionals(
+    filters: ProfessionalsFilters = {},
+    enabled = true
+) {
   return useQuery<ProfessionalsResponse>({
-    queryKey: ["professionals", "list"],
-    queryFn: getProfessionals,
+    queryKey: ["professionals", "list", filters],
+    queryFn: () => getProfessionals(filters),
     enabled,
+    keepPreviousData: true,
   });
 }
 
@@ -45,5 +74,30 @@ export function useApproveProfessional() {
       ["professionals", "pending"],
       ["professionals", "dashboard"],
     ],
+  });
+}
+
+import { assignAsMentor, type AssignMentorRequest } from "@/lib/api/services/professionals";
+
+export function useAssignAsMentor() {
+  return useMutationWithToast({
+    mutationFn: ({ id, data }: { id: number; data: AssignMentorRequest }) =>
+        assignAsMentor(id, data),
+    successMessage: "Professional assigned as mentor successfully",
+    errorMessage: "Failed to assign as mentor",
+    invalidateKeys: [
+      ["professionals", "profile"],
+      ["professionals", "list"],
+    ],
+  });
+}
+
+import { getProfessionalReviews } from "@/lib/api/services/professionals";
+
+export function useProfessionalReviews(id: number, enabled = true) {
+  return useQuery<any[]>({
+    queryKey: ["professionals", "reviews", id],
+    queryFn: () => getProfessionalReviews(id),
+    enabled: enabled && !!id,
   });
 }

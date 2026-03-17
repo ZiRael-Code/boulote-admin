@@ -1,253 +1,234 @@
-import { useQuery } from "@tanstack/react-query";
-import { useMutationWithToast } from "./use-mutation-with-toast";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import {
   getQuizDashboard,
   getQuizzes,
-  getQuizById,
-  getQuizAnalytics,
-  getQuizCategories,
-  getCategoryStats,
-  getScheduledSessions,
-  getQuizSettings,
-  createQuiz,
-  updateQuiz,
-  deleteQuiz,
+  getQuiz,
   archiveQuiz,
-  publishQuiz,
-  saveQuizDraft,
-  scheduleSession,
-  createRecurringSchedule,
-  updateQuizSettings,
+  deleteQuiz,
+  getQuizCategories,
   createCategory,
   updateCategory,
   deleteCategory,
+  getCategoryStats,
+  getQuizSettings,
+  updateQuizSettings,
+  getScheduledSessions,
+  createQuiz,
+  saveQuizDraft,
+  type QuizFilters,
   type CreateQuizRequest,
-  type UpdateQuizRequest,
 } from "@/lib/api/services/quizzes";
-import type {
-  Quiz,
-  QuizDetails,
-  QuizDashboardResponse,
-  QuizCategory,
-  QuizAnalytics,
-  QuizSettings,
-  CategoryStats,
-  ScheduledSession,
-} from "@/lib/types/quiz";
 
 export function useQuizDashboard(enabled = true) {
-  return useQuery<QuizDashboardResponse>({
+  return useQuery({
     queryKey: ["quizzes", "dashboard"],
     queryFn: getQuizDashboard,
     enabled,
   });
 }
 
-export function useQuizStats(enabled = true) {
-  const { data: dashboard } = useQuizDashboard(enabled);
-  return {
-    data: dashboard?.stats,
-    isLoading: !dashboard,
-  };
-}
-
-export function useQuizzes(
-  params?: {
-    search?: string;
-    status?: string;
-    category?: string;
-    page?: number;
-    size?: number;
-  },
-  enabled = true
-) {
-  return useQuery<{ content: Quiz[]; totalElements: number }>({
-    queryKey: ["quizzes", "list", params],
-    queryFn: () => getQuizzes(params),
+export function useQuizzes(filters: QuizFilters = {}, enabled = true) {
+  return useQuery({
+    queryKey: ["quizzes", "list", filters],
+    queryFn: () => getQuizzes(filters),
     enabled,
+    keepPreviousData: true,
   });
 }
 
 export function useQuiz(quizId: number, enabled = true) {
-  return useQuery<QuizDetails>({
-    queryKey: ["quizzes", quizId],
-    queryFn: () => getQuizById(quizId),
+  return useQuery({
+    queryKey: ["quizzes", "detail", quizId],
+    queryFn: () => getQuiz(quizId),
     enabled: enabled && !!quizId,
   });
 }
 
-export function useQuizAnalytics(quizId: number, enabled = true) {
-  return useQuery<QuizAnalytics>({
-    queryKey: ["quizzes", quizId, "analytics"],
-    queryFn: () => getQuizAnalytics(quizId),
-    enabled: enabled && !!quizId,
+export function useArchiveQuiz() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (quizId: number) => archiveQuiz(quizId),
+    onSuccess: () => {
+      toast.success("Quiz archived");
+      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+    },
+    onError: () => toast.error("Failed to archive quiz"),
+  });
+}
+
+export function useDeleteQuiz() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (quizId: number) => deleteQuiz(quizId),
+    onSuccess: () => {
+      toast.success("Quiz deleted");
+      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || "Failed to delete quiz"),
   });
 }
 
 export function useQuizCategories(enabled = true) {
-  return useQuery<QuizCategory[]>({
+  return useQuery({
     queryKey: ["quizzes", "categories"],
     queryFn: getQuizCategories,
     enabled,
   });
 }
 
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { name: string; description?: string }) => createCategory(data),
+    onSuccess: () => {
+      toast.success("Category created");
+      queryClient.invalidateQueries({ queryKey: ["quizzes", "categories"] });
+    },
+    onError: () => toast.error("Failed to create category"),
+  });
+}
+
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ categoryId, name }: { categoryId: number; name: string }) =>
+        updateCategory(categoryId, { name }),
+    onSuccess: () => {
+      toast.success("Category updated");
+      queryClient.invalidateQueries({ queryKey: ["quizzes", "categories"] });
+    },
+    onError: () => toast.error("Failed to update category"),
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (categoryId: number) => deleteCategory(categoryId),
+    onSuccess: () => {
+      toast.success("Category deleted");
+      queryClient.invalidateQueries({ queryKey: ["quizzes", "categories"] });
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || "Failed to delete category"),
+  });
+}
+
 export function useCategoryStats(enabled = true) {
-  return useQuery<CategoryStats>({
-    queryKey: ["quizzes", "categories", "stats"],
+  return useQuery({
+    queryKey: ["quizzes", "category-stats"],
     queryFn: getCategoryStats,
     enabled,
   });
 }
 
-export function useScheduledSessions(
-  params?: {
-    date?: string;
-    view?: "calendar" | "list" | "upcoming";
-  },
-  enabled = true
-) {
-  return useQuery<ScheduledSession[]>({
-    queryKey: ["quizzes", "sessions", params],
-    queryFn: () => getScheduledSessions(params),
-    enabled,
-  });
-}
-
 export function useQuizSettings(enabled = true) {
-  return useQuery<QuizSettings>({
+  return useQuery({
     queryKey: ["quizzes", "settings"],
     queryFn: getQuizSettings,
     enabled,
   });
 }
 
+export function useUpdateQuizSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => updateQuizSettings(data),
+    onSuccess: () => {
+      toast.success("Settings saved");
+      queryClient.invalidateQueries({ queryKey: ["quizzes", "settings"] });
+    },
+    onError: () => toast.error("Failed to save settings"),
+  });
+}
+
+export function useScheduledSessions(params: { date?: string; view?: string }, enabled = true) {
+  return useQuery({
+    queryKey: ["quizzes", "sessions", params],
+    queryFn: () => getScheduledSessions(params),
+    enabled,
+  });
+}
+
 export function useCreateQuiz() {
-  return useMutationWithToast({
+  const queryClient = useQueryClient();
+  return useMutation({
     mutationFn: (data: CreateQuizRequest) => createQuiz(data),
-    successMessage: "Quiz created successfully",
-    errorMessage: "Failed to create quiz",
-    invalidateKeys: [["quizzes"]],
-  });
-}
-
-export function useUpdateQuiz() {
-  return useMutationWithToast({
-    mutationFn: (data: UpdateQuizRequest) => updateQuiz(data),
-    successMessage: "Quiz updated successfully",
-    errorMessage: "Failed to update quiz",
-    invalidateKeys: (_, variables) => [
-      ["quizzes"],
-      ["quizzes", String(variables.id)],
-    ],
-  });
-}
-
-export function useDeleteQuiz() {
-  return useMutationWithToast({
-    mutationFn: (quizId: number) => deleteQuiz(quizId),
-    successMessage: "Quiz deleted successfully",
-    errorMessage: "Failed to delete quiz",
-    invalidateKeys: [["quizzes"]],
-  });
-}
-
-export function useArchiveQuiz() {
-  return useMutationWithToast({
-    mutationFn: (quizId: number) => archiveQuiz(quizId),
-    successMessage: "Quiz archived successfully",
-    errorMessage: "Failed to archive quiz",
-    invalidateKeys: (_, quizId) => [
-      ["quizzes"],
-      ["quizzes", String(quizId)],
-    ],
-  });
-}
-
-export function usePublishQuiz() {
-  return useMutationWithToast({
-    mutationFn: (quizId: number) => publishQuiz(quizId),
-    successMessage: "Quiz published successfully",
-    errorMessage: "Failed to publish quiz",
-    invalidateKeys: (_, quizId) => [
-      ["quizzes"],
-      ["quizzes", String(quizId)],
-    ],
+    onSuccess: () => {
+      toast.success("Quiz published");
+      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+    },
+    onError: () => toast.error("Failed to publish quiz"),
   });
 }
 
 export function useSaveQuizDraft() {
-  return useMutationWithToast({
-    mutationFn: (data: CreateQuizRequest | UpdateQuizRequest) => saveQuizDraft(data),
-    successMessage: "Draft saved successfully",
-    errorMessage: "Failed to save draft",
-    invalidateKeys: [["quizzes"]],
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateQuizRequest) => saveQuizDraft(data),
+    onSuccess: () => {
+      toast.success("Draft saved");
+      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+    },
+    onError: () => toast.error("Failed to save draft"),
   });
 }
 
-export function useScheduleSession() {
-  return useMutationWithToast({
-    mutationFn: (data: {
-      quizId: number;
-      startTime: string;
-      endTime: string;
-      duration: number;
-    }) => scheduleSession(data),
-    successMessage: "Session scheduled successfully",
-    errorMessage: "Failed to schedule session",
-    invalidateKeys: [["quizzes", "sessions"]],
+import {
+  getJsonQuestions,
+  updateJsonQuestion,
+  getProfessionsWithSkills,
+} from "@/lib/api/services/quizzes";
+
+export function useJsonQuestions(enabled = true) {
+  return useQuery({
+    queryKey: ["quizzes", "json-questions"],
+    queryFn: getJsonQuestions,
+    enabled,
   });
 }
 
-export function useCreateRecurringSchedule() {
-  return useMutationWithToast({
-    mutationFn: (data: {
-      quizId: number;
-      frequency: "DAILY" | "WEEKLY" | "MONTHLY";
-      daysOfWeek?: number[];
-      time: string;
-      endDate?: string;
-    }) => createRecurringSchedule(data),
-    successMessage: "Recurring schedule created successfully",
-    errorMessage: "Failed to create recurring schedule",
-    invalidateKeys: [["quizzes", "sessions"]],
+export function useUpdateJsonQuestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ index, data }: { index: number; data: any }) =>
+        updateJsonQuestion(index, data),
+    onSuccess: () => {
+      toast.success("Question updated");
+      queryClient.invalidateQueries({ queryKey: ["quizzes", "json-questions"] });
+    },
+    onError: () => toast.error("Failed to update question"),
   });
 }
 
-export function useUpdateQuizSettings() {
-  return useMutationWithToast({
-    mutationFn: (settings: Partial<QuizSettings>) => updateQuizSettings(settings),
-    successMessage: "Settings updated successfully",
-    errorMessage: "Failed to update settings",
-    invalidateKeys: [["quizzes", "settings"]],
+import { getQuizCategoryNames } from "@/lib/api/services/quizzes";
+
+export function useQuizCategoryOptions(enabled = true) {
+  return useQuery({
+    queryKey: ["quizzes", "category-options"],
+    queryFn: getQuizCategoryNames,
+    enabled,
   });
 }
 
-export function useCreateCategory() {
-  return useMutationWithToast({
-    mutationFn: (data: { name: string; parentId?: number }) =>
-      createCategory(data.name, data.parentId),
-    successMessage: "Category created successfully",
-    errorMessage: "Failed to create category",
-    invalidateKeys: [["quizzes", "categories"]],
+import { updateQuiz } from "@/lib/api/services/quizzes";
+
+export function useUpdateQuiz() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ quizId, data }: { quizId: number; data: any }) => updateQuiz(quizId, data),
+    onSuccess: () => {
+      toast.success("Quiz updated");
+      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+    },
+    onError: () => toast.error("Failed to update quiz"),
   });
 }
 
-export function useUpdateCategory() {
-  return useMutationWithToast({
-    mutationFn: (data: { categoryId: number; name: string }) =>
-      updateCategory(data.categoryId, data.name),
-    successMessage: "Category updated successfully",
-    errorMessage: "Failed to update category",
-    invalidateKeys: [["quizzes", "categories"]],
-  });
-}
-
-export function useDeleteCategory() {
-  return useMutationWithToast({
-    mutationFn: (categoryId: number) => deleteCategory(categoryId),
-    successMessage: "Category deleted successfully",
-    errorMessage: "Failed to delete category",
-    invalidateKeys: [["quizzes", "categories"]],
+export function useProfessionsWithSkills(enabled = true) {
+  return useQuery({
+    queryKey: ["professions", "with-skills"],
+    queryFn: getProfessionsWithSkills,
+    enabled,
   });
 }

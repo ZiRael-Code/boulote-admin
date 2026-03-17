@@ -58,13 +58,19 @@ export function Sidebar({ isOpen = true, onToggle }: SidebarProps) {
       label: "Quizzes",
       href: "/dashboard/quizzes",
       iconSize: 24,
+    },,
+    {
+      icon: "/assets/icon/dashboard/quiz.svg",
+      label: "Mentorship",
+      href: "/dashboard/mentorship",
+      iconSize: 24,
     },
     {
       icon: "/assets/icon/dashboard/notifications.svg",
       label: "Notifications&Messaging",
       href: "/dashboard/notifications",
       iconSize: 32,
-    },
+    }
   ];
 
   return (
