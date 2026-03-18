@@ -4,11 +4,12 @@ import type {
   ProfessionalsResponse,
   PendingApprovalsResponse,
   ProfessionalProfile,
+  ProfessionalReview,
 } from "@/lib/types/professional";
 
 export async function getProfessionalsDashboard(): Promise<ProfessionalsDashboardResponse> {
   const response = await axiosInstance.get<ProfessionalsDashboardResponse>(
-      "/admin/professionals/dashboard"
+    "/admin/professionals/dashboard",
   );
   return response.data;
 }
@@ -23,7 +24,7 @@ export type ProfessionalsFilters = {
 };
 
 export async function getProfessionals(
-    filters: ProfessionalsFilters = {}
+  filters: ProfessionalsFilters = {},
 ): Promise<ProfessionalsResponse> {
   const params = new URLSearchParams();
   if (filters.skills) params.append("skills", filters.skills);
@@ -34,13 +35,17 @@ export async function getProfessionals(
   params.append("size", String(filters.size ?? 10));
 
   const response = await axiosInstance.get<ProfessionalsResponse>(
-      `/admin/professionals/getProfessionals?${params.toString()}`
+    `/admin/professionals/getProfessionals?${params.toString()}`,
   );
   return response.data;
 }
 
-export async function getProfessionalReviews(id: number): Promise<any[]> {
-  const response = await axiosInstance.get(`/admin/professionals/reviews/${id}`);
+export async function getProfessionalReviews(
+  id: number,
+): Promise<ProfessionalReview[]> {
+  const response = await axiosInstance.get<ProfessionalReview[]>(
+    `/admin/professionals/reviews/${id}`,
+  );
   return response.data;
 }
 
@@ -51,8 +56,8 @@ export type AssignMentorRequest = {
 };
 
 export async function assignAsMentor(
-    professionalId: number,
-    data: AssignMentorRequest
+  professionalId: number,
+  data: AssignMentorRequest,
 ): Promise<void> {
   const params = new URLSearchParams();
   if (data.category) params.append("category", data.category);
@@ -61,13 +66,15 @@ export async function assignAsMentor(
     data.specializedAreas.forEach((a) => params.append("specializedAreas", a));
   }
   await axiosInstance.post(
-      `/admin/professionals/assign-mentor/${professionalId}?${params.toString()}`
+    `/admin/professionals/assign-mentor/${professionalId}?${params.toString()}`,
   );
 }
 
-export async function getProfessionalProfile(id: number): Promise<ProfessionalProfile> {
+export async function getProfessionalProfile(
+  id: number,
+): Promise<ProfessionalProfile> {
   const response = await axiosInstance.get<ProfessionalProfile>(
-      `/admin/professionals/profile/${id}`
+    `/admin/professionals/profile/${id}`,
   );
   return response.data;
 }
@@ -78,7 +85,7 @@ export async function rejectProfessional(id: number): Promise<void> {
 
 export async function getPendingApprovals(): Promise<PendingApprovalsResponse> {
   const response = await axiosInstance.get<PendingApprovalsResponse>(
-      "/admin/professionals/pending"
+    "/admin/professionals/pending",
   );
   return response.data;
 }

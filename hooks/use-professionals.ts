@@ -13,10 +13,15 @@ import type {
   ProfessionalsResponse,
   PendingApprovalsResponse,
   ProfessionalProfile,
+  ProfessionalReview,
 } from "@/lib/types/professional";
 
 export function useProfessionalsDashboard(enabled = true) {
-  return useQuery<ProfessionalsDashboardResponse>({
+  return useQuery<
+    ProfessionalsDashboardResponse,
+    Error,
+    ProfessionalsDashboardResponse
+  >({
     queryKey: ["professionals", "dashboard"],
     queryFn: getProfessionalsDashboard,
     enabled,
@@ -24,7 +29,7 @@ export function useProfessionalsDashboard(enabled = true) {
 }
 
 export function useProfessionalProfile(id: number, enabled = true) {
-  return useQuery<ProfessionalProfile>({
+  return useQuery<ProfessionalProfile, Error, ProfessionalProfile>({
     queryKey: ["professionals", "profile", id],
     queryFn: () => getProfessionalProfile(id),
     enabled: enabled && !!id,
@@ -46,19 +51,18 @@ export function useRejectProfessional() {
 import type { ProfessionalsFilters } from "@/lib/api/services/professionals";
 
 export function useProfessionals(
-    filters: ProfessionalsFilters = {},
-    enabled = true
+  filters: ProfessionalsFilters = {},
+  enabled = true,
 ) {
-  return useQuery<ProfessionalsResponse>({
+  return useQuery<ProfessionalsResponse, Error, ProfessionalsResponse>({
     queryKey: ["professionals", "list", filters],
     queryFn: () => getProfessionals(filters),
     enabled,
-    keepPreviousData: true,
   });
 }
 
 export function usePendingApprovals(enabled = true) {
-  return useQuery<PendingApprovalsResponse>({
+  return useQuery<PendingApprovalsResponse, Error, PendingApprovalsResponse>({
     queryKey: ["professionals", "pending"],
     queryFn: getPendingApprovals,
     enabled,
@@ -77,12 +81,15 @@ export function useApproveProfessional() {
   });
 }
 
-import { assignAsMentor, type AssignMentorRequest } from "@/lib/api/services/professionals";
+import {
+  assignAsMentor,
+  type AssignMentorRequest,
+} from "@/lib/api/services/professionals";
 
 export function useAssignAsMentor() {
   return useMutationWithToast({
     mutationFn: ({ id, data }: { id: number; data: AssignMentorRequest }) =>
-        assignAsMentor(id, data),
+      assignAsMentor(id, data),
     successMessage: "Professional assigned as mentor successfully",
     errorMessage: "Failed to assign as mentor",
     invalidateKeys: [
@@ -95,7 +102,7 @@ export function useAssignAsMentor() {
 import { getProfessionalReviews } from "@/lib/api/services/professionals";
 
 export function useProfessionalReviews(id: number, enabled = true) {
-  return useQuery<any[]>({
+  return useQuery<ProfessionalReview[], Error, ProfessionalReview[]>({
     queryKey: ["professionals", "reviews", id],
     queryFn: () => getProfessionalReviews(id),
     enabled: enabled && !!id,

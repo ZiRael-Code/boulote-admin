@@ -20,18 +20,19 @@ export default function ScheduleQuizSessionsPage() {
       date: selectedDate.toISOString(),
       view,
     },
-    true
+    true,
   );
 
-  const todaySessions = sessions?.filter((s) => {
-    const sessionDate = new Date(s.startTime);
-    const today = new Date();
-    return (
-      sessionDate.getDate() === today.getDate() &&
-      sessionDate.getMonth() === today.getMonth() &&
-      sessionDate.getFullYear() === today.getFullYear()
-    );
-  }) || [];
+  const todaySessions =
+    sessions?.filter((s: { startTime: string }) => {
+      const sessionDate = new Date(s.startTime);
+      const today = new Date();
+      return (
+        sessionDate.getDate() === today.getDate() &&
+        sessionDate.getMonth() === today.getMonth() &&
+        sessionDate.getFullYear() === today.getFullYear()
+      );
+    }) || [];
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 lg:pl-16 lg:pr-8 lg:py-16">
@@ -46,7 +47,6 @@ export default function ScheduleQuizSessionsPage() {
           Schedule quiz sessions
         </h1>
       </div>
-
       <div className="flex gap-4">
         <Button
           variant={scheduleType === "today" ? "primary" : "secondary"}
@@ -73,7 +73,6 @@ export default function ScheduleQuizSessionsPage() {
           Bulk Schedule
         </Button>
       </div>
-
       <div className="flex gap-4 border-b border-border-500">
         <button
           onClick={() => setView("calendar")}
@@ -106,7 +105,6 @@ export default function ScheduleQuizSessionsPage() {
           Upcoming sessions
         </button>
       </div>
-
       {view === "calendar" && (
         <div className="flex flex-col gap-6">
           <div className="bg-white border border-border-500 rounded-md p-6">
@@ -126,7 +124,10 @@ export default function ScheduleQuizSessionsPage() {
             </div>
             <div className="grid grid-cols-7 gap-2">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div key={day} className="text-center text-sm font-medium text-secondary-500">
+                <div
+                  key={day}
+                  className="text-center text-sm font-medium text-secondary-500"
+                >
                   {day}
                 </div>
               ))}
@@ -139,68 +140,78 @@ export default function ScheduleQuizSessionsPage() {
       )}
       <div className="flex flex-col gap-4">
         <h2 className="text-xl font-semibold text-secondary-500">
-          Today Schedule - {new Date().toLocaleDateString("en-US", {
+          Today Schedule -{" "}
+          {new Date().toLocaleDateString("en-US", {
             month: "long",
             day: "numeric",
             year: "numeric",
           })}
         </h2>
         <div className="flex flex-col gap-4">
-          {todaySessions.map((session) => (
-            <div
-              key={session.id}
-              className="bg-white border border-border-500 rounded-md p-6 flex items-center justify-between"
-            >
-              <div className="flex flex-col gap-2 flex-1">
-                <h3 className="text-lg font-medium text-secondary-500">
-                  Quiz Session {session.id}
-                </h3>
-                <div className="flex items-center gap-4 text-sm text-neutral-500">
-                  <span>
-                    {new Date(session.startTime).toLocaleTimeString()} -{" "}
-                    {new Date(session.endTime).toLocaleTimeString()} ({session.duration}{" "}
-                    minutes)
-                  </span>
+          {todaySessions.map(
+            (session: {
+              id: number;
+              startTime: string;
+              endTime: string;
+              duration: number;
+              status: string;
+              participants: number;
+              registeredParticipants: number;
+            }) => (
+              <div
+                key={session.id}
+                className="bg-white border border-border-500 rounded-md p-6 flex items-center justify-between"
+              >
+                <div className="flex flex-col gap-2 flex-1">
+                  <h3 className="text-lg font-medium text-secondary-500">
+                    Quiz Session {session.id}
+                  </h3>
+                  <div className="flex items-center gap-4 text-sm text-neutral-500">
+                    <span>
+                      {new Date(session.startTime).toLocaleTimeString()} -{" "}
+                      {new Date(session.endTime).toLocaleTimeString()} (
+                      {session.duration} minutes)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-neutral-500">
+                    {session.status === "LIVE" ? (
+                      <span>{session.participants} participants active</span>
+                    ) : (
+                      <span>{session.registeredParticipants} registered</span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-neutral-500">
+                <div className="flex items-center gap-4">
+                  <span
+                    className={`px-3 py-1 rounded text-sm font-medium ${
+                      session.status === "LIVE"
+                        ? "bg-success-50 text-success-800"
+                        : session.status === "UPCOMING"
+                          ? "bg-primary-50 text-primary-800"
+                          : "bg-neutral-100 text-neutral-700"
+                    }`}
+                  >
+                    {session.status}
+                  </span>
                   {session.status === "LIVE" ? (
-                    <span>{session.participants} participants active</span>
+                    <>
+                      <Button variant="secondary">Monitor</Button>
+                      <Button variant="danger">End early</Button>
+                    </>
                   ) : (
-                    <span>{session.registeredParticipants} registered</span>
+                    <>
+                      <Button variant="primary">Start Now</Button>
+                      <Button variant="secondary">Edit</Button>
+                    </>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <span
-                  className={`px-3 py-1 rounded text-sm font-medium ${
-                    session.status === "LIVE"
-                      ? "bg-success-50 text-success-800"
-                      : session.status === "UPCOMING"
-                      ? "bg-primary-50 text-primary-800"
-                      : "bg-neutral-100 text-neutral-700"
-                  }`}
-                >
-                  {session.status}
-                </span>
-                {session.status === "LIVE" ? (
-                  <>
-                    <Button variant="secondary">Monitor</Button>
-                    <Button variant="danger">End early</Button>
-                  </>
-                ) : (
-                  <>
-                    <Button variant="primary">Start Now</Button>
-                    <Button variant="secondary">Edit</Button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       </div>
-\
+      \
       <div className="flex flex-col gap-4">
- 
         <h2 className="text-xl font-semibold text-secondary-500">
           Scheduling statistics
         </h2>
@@ -209,11 +220,17 @@ export default function ScheduleQuizSessionsPage() {
             <p className="text-4xl font-bold text-primary-500">
               {todaySessions.length}
             </p>
-            <p className="text-base text-neutral-500 text-center">Sessions today</p>
+            <p className="text-base text-neutral-500 text-center">
+              Sessions today
+            </p>
           </div>
           <div className="bg-white border border-border-500 rounded-md p-6 flex flex-col items-center">
             <p className="text-4xl font-bold text-primary-500">
-              {todaySessions.reduce((sum, s) => sum + s.participants, 0)}
+              {todaySessions.reduce(
+                (sum: number, s: { participants: number }) =>
+                  sum + s.participants,
+                0,
+              )}
             </p>
             <p className="text-base text-neutral-500 text-center">
               Active participants
@@ -223,11 +240,15 @@ export default function ScheduleQuizSessionsPage() {
             <p className="text-4xl font-bold text-primary-500">
               {sessions?.length || 0}
             </p>
-            <p className="text-base text-neutral-500 text-center">Sessions this week</p>
+            <p className="text-base text-neutral-500 text-center">
+              Sessions this week
+            </p>
           </div>
           <div className="bg-white border border-border-500 rounded-md p-6 flex flex-col items-center">
             <p className="text-4xl font-bold text-primary-500">94%</p>
-            <p className="text-base text-neutral-500 text-center">Attendance rate</p>
+            <p className="text-base text-neutral-500 text-center">
+              Attendance rate
+            </p>
           </div>
         </div>
       </div>

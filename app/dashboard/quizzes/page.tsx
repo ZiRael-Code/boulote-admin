@@ -470,7 +470,7 @@ function QuizDetailsPanel({
 
         <div className="text-sm text-neutral-500">
           Created: {new Date(quiz.createdAt).toLocaleDateString()} • Last updated:{" "}
-          {formatRelativeTime(quiz.lastUpdated)}
+          {formatRelativeTime(quiz.lastUpdated ?? quiz.createdAt)}
         </div>
 
         <div className="flex gap-8">

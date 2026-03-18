@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/button";
 import { useQuiz } from "@/hooks/use-quizzes";
 import { formatRelativeTime } from "@/lib/utils/format-date";
+import type { QuizAttempt } from "@/lib/types/quiz";
 
 export default function QuizAnalyticsPage() {
   const params = useParams();
@@ -97,7 +98,7 @@ export default function QuizAnalyticsPage() {
         </div>
         {quiz.recentActivities && quiz.recentActivities.length > 0 ? (
           <div className="flex flex-col gap-4">
-            {quiz.recentActivities.map((attempt) => (
+            {quiz.recentActivities.map((attempt: QuizAttempt) => (
               <div
                 key={attempt.id}
                 className="bg-white border border-border-500 rounded-md p-6 flex items-center justify-between"

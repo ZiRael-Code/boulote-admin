@@ -33,7 +33,6 @@ export function useQuizzes(filters: QuizFilters = {}, enabled = true) {
     queryKey: ["quizzes", "list", filters],
     queryFn: () => getQuizzes(filters),
     enabled,
-    keepPreviousData: true,
   });
 }
 
@@ -65,12 +64,13 @@ export function useDeleteQuiz() {
       toast.success("Quiz deleted");
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
     },
-    onError: (error: any) => toast.error(error?.response?.data?.message || "Failed to delete quiz"),
+    onError: (error: any) =>
+      toast.error(error?.response?.data?.message || "Failed to delete quiz"),
   });
 }
 
 export function useQuizCategories(enabled = true) {
-  return useQuery({
+  return useQuery<any[], Error, any[]>({
     queryKey: ["quizzes", "categories"],
     queryFn: getQuizCategories,
     enabled,
@@ -80,7 +80,8 @@ export function useQuizCategories(enabled = true) {
 export function useCreateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { name: string; description?: string }) => createCategory(data),
+    mutationFn: (data: { name: string; description?: string }) =>
+      createCategory(data),
     onSuccess: () => {
       toast.success("Category created");
       queryClient.invalidateQueries({ queryKey: ["quizzes", "categories"] });
@@ -93,7 +94,7 @@ export function useUpdateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ categoryId, name }: { categoryId: number; name: string }) =>
-        updateCategory(categoryId, { name }),
+      updateCategory(categoryId, { name }),
     onSuccess: () => {
       toast.success("Category updated");
       queryClient.invalidateQueries({ queryKey: ["quizzes", "categories"] });
@@ -110,12 +111,33 @@ export function useDeleteCategory() {
       toast.success("Category deleted");
       queryClient.invalidateQueries({ queryKey: ["quizzes", "categories"] });
     },
-    onError: (error: any) => toast.error(error?.response?.data?.message || "Failed to delete category"),
+    onError: (error: any) =>
+      toast.error(
+        error?.response?.data?.message || "Failed to delete category",
+      ),
   });
 }
 
 export function useCategoryStats(enabled = true) {
-  return useQuery({
+  return useQuery<
+    {
+      programmingQuizzes: number;
+      designQuizzes: number;
+      marketingQuizzes: number;
+      programmingTrend: string;
+      designTrend: string;
+      marketingTrend: string;
+    },
+    Error,
+    {
+      programmingQuizzes: number;
+      designQuizzes: number;
+      marketingQuizzes: number;
+      programmingTrend: string;
+      designTrend: string;
+      marketingTrend: string;
+    }
+  >({
     queryKey: ["quizzes", "category-stats"],
     queryFn: getCategoryStats,
     enabled,
@@ -142,7 +164,10 @@ export function useUpdateQuizSettings() {
   });
 }
 
-export function useScheduledSessions(params: { date?: string; view?: string }, enabled = true) {
+export function useScheduledSessions(
+  params: { date?: string; view?: string },
+  enabled = true,
+) {
   return useQuery({
     queryKey: ["quizzes", "sessions", params],
     queryFn: () => getScheduledSessions(params),
@@ -192,10 +217,12 @@ export function useUpdateJsonQuestion() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ index, data }: { index: number; data: any }) =>
-        updateJsonQuestion(index, data),
+      updateJsonQuestion(index, data),
     onSuccess: () => {
       toast.success("Question updated");
-      queryClient.invalidateQueries({ queryKey: ["quizzes", "json-questions"] });
+      queryClient.invalidateQueries({
+        queryKey: ["quizzes", "json-questions"],
+      });
     },
     onError: () => toast.error("Failed to update question"),
   });
@@ -216,7 +243,8 @@ import { updateQuiz } from "@/lib/api/services/quizzes";
 export function useUpdateQuiz() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ quizId, data }: { quizId: number; data: any }) => updateQuiz(quizId, data),
+    mutationFn: ({ quizId, data }: { quizId: number; data: any }) =>
+      updateQuiz(quizId, data),
     onSuccess: () => {
       toast.success("Quiz updated");
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
