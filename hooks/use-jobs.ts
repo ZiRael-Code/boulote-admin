@@ -1,6 +1,10 @@
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMutationWithToast } from "./use-mutation-with-toast";
-import {bulkStartAIShortlisting, type BulkShortlistResult, getAIReviewJobs} from "@/lib/api/services/jobs";
+import {
+  bulkStartAIShortlisting,
+  type BulkShortlistResult,
+  getAIReviewJobs,
+} from "@/lib/api/services/jobs";
 
 import {
   getPendingJobs,
@@ -20,6 +24,7 @@ import type {
   AIShortlistingStatusResponse,
   ShortlistingResult,
   ActiveProcessesResponse,
+  AIShortlistingStatus,
 } from "@/lib/types/job";
 import toast from "react-hot-toast";
 
@@ -61,16 +66,23 @@ export function useStartAIShortlisting() {
 }
 
 export function useAIShortlistingStatus(
-    projectId: number,
-    enabled = true,
-    refetchInterval?: number
+  projectId: number,
+  enabled = true,
+  refetchInterval?: number,
 ) {
-  return useQuery<AIShortlistingStatusResponse>({
+  return useQuery<
+    AIShortlistingStatusResponse,
+    Error,
+    AIShortlistingStatusResponse
+  >({
     queryKey: ["ai-shortlisting", "status", projectId],
     queryFn: async () => {
       const data = await getAIShortlistingStatus(projectId);
-
-      return { ...data, status: data.status?.toLowerCase() };
+      const normalizedStatus = (data.status ?? "pending").toLowerCase();
+      return {
+        ...data,
+        status: normalizedStatus as AIShortlistingStatus,
+      };
     },
     enabled: enabled && !!projectId,
     refetchInterval: (query) => {
@@ -84,7 +96,7 @@ export function useAIShortlistingStatus(
 }
 
 export function useAIShortlistingResults(projectId: number, enabled = true) {
-  return useQuery<ShortlistingResult | null>({
+  return useQuery<ShortlistingResult | null, Error, ShortlistingResult | null>({
     queryKey: ["ai-shortlisting", "results", projectId],
     queryFn: () => getAIShortlistingResults(projectId),
     enabled: enabled && !!projectId,
@@ -119,8 +131,7 @@ export function useAssignSelectedProfessional() {
 export function useRejectAllAndManuallySelect() {
   return useMutationWithToast({
     mutationFn: (data: RejectAllRequest) => rejectAllAndManuallySelect(data),
-    successMessage:
-        "All professionals rejected. You can now manually select.",
+    successMessage: "All professionals rejected. You can now manually select.",
     errorMessage: "Failed to reject professionals",
     invalidateKeys: (_, variables) => [
       ["ai-shortlisting", "results", String(variables.projectId)],
@@ -131,29 +142,31 @@ export function useRejectAllAndManuallySelect() {
 }
 
 export function useBulkAIShortlisting() {
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-    return useMutation<BulkShortlistResult[], Error, number[]>({
-      mutationFn: (projectIds) => bulkStartAIShortlisting(projectIds),
-      onSuccess: (data) => {
-        const failed = data.filter((r) => r.status === "FAILED");
-        const started = data.filter((r) => r.status === "STARTED");
+  return useMutation<BulkShortlistResult[], Error, number[]>({
+    mutationFn: (projectIds) => bulkStartAIShortlisting(projectIds),
+    onSuccess: (data) => {
+      const failed = data.filter((r) => r.status === "FAILED");
+      const started = data.filter((r) => r.status === "STARTED");
 
-        if (started.length > 0) {
-          toast.success(`AI shortlisting started for ${started.length} project(s)`);
-        }
-        if (failed.length > 0) {
-          toast.error(`Failed to start ${failed.length} project(s)`);
-        }
+      if (started.length > 0) {
+        toast.success(
+          `AI shortlisting started for ${started.length} project(s)`,
+        );
+      }
+      if (failed.length > 0) {
+        toast.error(`Failed to start ${failed.length} project(s)`);
+      }
 
-        queryClient.invalidateQueries({ queryKey: ["jobs"] });
-        queryClient.invalidateQueries({ queryKey: ["ai-shortlisting"] });
-      },
-      onError: () => {
-        toast.error("Bulk AI shortlisting failed");
-      },
-    });
-  }
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["ai-shortlisting"] });
+    },
+    onError: () => {
+      toast.error("Bulk AI shortlisting failed");
+    },
+  });
+}
 
 export function useAIReviewJobs(enabled = true) {
   return useQuery<JobsResponse>({
@@ -163,4 +176,3 @@ export function useAIReviewJobs(enabled = true) {
     refetchInterval: 10000,
   });
 }
-

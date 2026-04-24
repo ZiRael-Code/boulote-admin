@@ -2,7 +2,11 @@ import type { PaginatedResponse } from "./api";
 
 export type ProfessionalStatus = "PENDING" | "ACTIVE" | "INACTIVE";
 
-export type ProfessionalRole = "OPERATIONS" | "DEVELOPER" | "DESIGNER" | "OTHER";
+export type ProfessionalRole =
+  | "OPERATIONS"
+  | "DEVELOPER"
+  | "DESIGNER"
+  | "OTHER";
 
 export type Subscription = "BASIC" | "PREMIUM";
 
@@ -23,9 +27,6 @@ export type Professional = {
   hasDocuments: boolean;
   mentorEligible: boolean;
 };
-
-
-
 
 export type ProfessionalsStats = {
   totalProfessionals: number;
@@ -154,3 +155,10 @@ export type Activity = {
   timeAgo: string;
 };
 
+export type ProfessionalReview = {
+  id: number;
+  reviewerName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+};

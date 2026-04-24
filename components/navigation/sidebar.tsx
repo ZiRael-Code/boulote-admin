@@ -58,7 +58,7 @@ export function Sidebar({ isOpen = true, onToggle }: SidebarProps) {
       label: "Quizzes",
       href: "/dashboard/quizzes",
       iconSize: 24,
-    },,
+    },
     {
       icon: "/assets/icon/dashboard/quiz.svg",
       label: "Mentorship",

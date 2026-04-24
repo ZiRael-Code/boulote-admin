@@ -90,7 +90,14 @@ export async function getCategoryStats() {
   const programming = categories.filter((c) => c.name?.toLowerCase().includes("programming")).reduce((s, c) => s + (c.quizCount || 0), 0);
   const design = categories.filter((c) => c.name?.toLowerCase().includes("design")).reduce((s, c) => s + (c.quizCount || 0), 0);
   const marketing = categories.filter((c) => c.name?.toLowerCase().includes("marketing")).reduce((s, c) => s + (c.quizCount || 0), 0);
-  return { programmingQuizzes: programming, designQuizzes: design, marketingQuizzes: marketing };
+  return {
+    programmingQuizzes: programming,
+    designQuizzes: design,
+    marketingQuizzes: marketing,
+    programmingTrend: "No change",
+    designTrend: "No change",
+    marketingTrend: "No change",
+  };
 }
 
 export async function getQuizSettings() {

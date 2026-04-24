@@ -29,7 +29,7 @@ export default function ProfessionalsPage() {
   const { data: dashboardData, isLoading: isLoadingStats } =
       useProfessionalsDashboard(true);
   const { data: professionalsData, isLoading: isLoadingProfessionals } =
-      useProfessionals(true);
+      useProfessionals({}, true);
 
   const stats = dashboardData?.stats;
   const allProfessionals = professionalsData?.content || [];
