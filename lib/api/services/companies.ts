@@ -13,6 +13,8 @@ export async function getCompaniesDashboard(): Promise<CompaniesDashboardRespons
   return response.data;
 }
 
+
+
 export async function getCompanies(): Promise<CompaniesResponse> {
   const response = await axiosInstance.get<CompaniesResponse>(
     "/admin/company/getCompanies"

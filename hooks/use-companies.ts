@@ -23,6 +23,8 @@ export function useCompaniesDashboard(enabled = true) {
   });
 }
 
+
+
 export function useCompanies(enabled = true) {
   return useQuery<CompaniesResponse>({
     queryKey: ["companies", "list"],
