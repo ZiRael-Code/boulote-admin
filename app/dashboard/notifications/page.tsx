@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Search, ChevronDown, Star, AlertTriangle } from "lucide-react";
+import {ChevronLeft, Search, ChevronDown, Star, AlertTriangle, Loader2} from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
@@ -449,9 +449,180 @@ function JobInvitesTab() {
 }
 
 
+function QuestionPreviewModal({
+                                alert,
+                                onClose,
+                                onApprove,
+                                onReject,
+                              }: {
+  alert: any;
+  onClose: () => void;
+  onApprove?: (id: number) => void;
+  onReject?: (id: number) => void;
+}) {
+  const [question, setQuestion] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const isActioned = !!alert.actionStatus;
+  const isQuizSubmission = alert.type === "QUIZ_SUBMISSION";
+
+  useEffect(() => {
+    if (!isQuizSubmission || !alert.relatedEntityId) {
+      setLoading(false);
+      return;
+    }
+    api.get(`/api/v1/public/quiz/questions/${alert.relatedEntityId}`)
+        .then((res) => setQuestion(res.data))
+        .catch(() => setQuestion(null))
+        .finally(() => setLoading(false));
+  }, [alert.relatedEntityId, isQuizSubmission]);
+
+  // Parse options — stored as JSON string in DB
+  let options: string[] = [];
+  if (question?.options) {
+    try {
+      options = typeof question.options === "string"
+          ? JSON.parse(question.options)
+          : question.options;
+    } catch {
+      options = [];
+    }
+  }
+
+  return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-secondary-600">
+              {isQuizSubmission ? "Quiz Question Review" : "Alert Details"}
+            </h2>
+            <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none"
+            >
+              ×
+            </button>
+          </div>
+
+          {isQuizSubmission ? (
+              loading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 size={24} className="animate-spin text-primary-500" />
+                  </div>
+              ) : question ? (
+                  <div className="space-y-4">
+                    {/* Category + Skill tags */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {question.quiz?.category?.skill?.name && (
+                          <span className="bg-primary-50 text-primary-600 text-xs px-3 py-1 rounded-full font-medium">
+                    {question.quiz.category.skill.name}
+                  </span>
+                      )}
+                      {question.difficultyLevel && (
+                          <span className="bg-neutral-100 text-neutral-500 text-xs px-3 py-1 rounded-full font-medium">
+                    {question.difficultyLevel}
+                  </span>
+                      )}
+                      {question.submittedByName && (
+                          <span className="text-xs text-gray-400">
+                    Submitted by: {question.submittedByName}
+                            {question.submittedByEmail && ` (${question.submittedByEmail})`}
+                  </span>
+                      )}
+                    </div>
+
+                    {/* Question text */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Question</p>
+                      <p className="text-sm font-medium text-secondary-500 leading-relaxed">
+                        {question.questionText}
+                      </p>
+                    </div>
+
+                    {/* Options */}
+                    {options.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Options</p>
+                          <div className="space-y-2">
+                            {options.map((opt: string, i: number) => (
+                                <div
+                                    key={i}
+                                    className={cn(
+                                        "flex items-center gap-3 p-3 rounded-xl border text-sm",
+                                        opt === question.correctAnswer
+                                            ? "border-green-200 bg-green-50 text-green-700"
+                                            : "border-neutral-200 text-secondary-500"
+                                    )}
+                                >
+                        <span className="font-semibold w-5 shrink-0">
+                          {String.fromCharCode(65 + i)}.
+                        </span>
+                                  <span>{opt}</span>
+                                  {opt === question.correctAnswer && (
+                                      <span className="ml-auto text-xs font-semibold text-green-600">✓ Correct</span>
+                                  )}
+                                </div>
+                            ))}
+                          </div>
+                        </div>
+                    )}
+
+                    {/* Explanation */}
+                    {question.explanation && (
+                        <div className="bg-neutral-50 rounded-xl p-4">
+                          <p className="text-xs font-semibold text-secondary-500 mb-1">Explanation</p>
+                          <p className="text-xs text-neutral-500 leading-relaxed">{question.explanation}</p>
+                        </div>
+                    )}
+
+                    {/* Status or action buttons */}
+                    {isActioned ? (
+                        <span className={cn(
+                            "inline-block text-xs px-3 py-1 rounded-full font-medium",
+                            alert.actionStatus === "APPROVED"
+                                ? "bg-green-50 text-green-600"
+                                : "bg-red-50 text-red-500"
+                        )}>
+                  {alert.actionStatus === "APPROVED" ? "✓ Approved" : "✗ Rejected"}
+                </span>
+                    ) : (
+                        <div className="flex gap-3 pt-2">
+                          <button
+                              onClick={() => { onApprove?.(alert.relatedEntityId); onClose(); }}
+                              className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+                          >
+                            Approve Question
+                          </button>
+                          <button
+                              onClick={() => { onReject?.(alert.relatedEntityId); onClose(); }}
+                              className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                    )}
+                  </div>
+              ) : (
+                  <p className="text-sm text-gray-400">Failed to load question details.</p>
+              )
+          ) : (
+              // Non-quiz alert preview
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-secondary-500">{alert.title}</p>
+                <p className="text-sm text-gray-500 leading-relaxed">{alert.message}</p>
+                {alert.actionUrl && (
+                    <p className="text-xs text-gray-400">URL: {alert.actionUrl}</p>
+                )}
+              </div>
+          )}
+        </div>
+      </div>
+  );
+}
+
 function SystemAlertsTab() {
-  const [typeFilter, setTypeFilter]         = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
+  const [previewAlert, setPreviewAlert] = useState<any | null>(null);
   const queryClient = useQueryClient();
 
   const { data: alerts, isLoading } = useSystemAlerts({
@@ -461,7 +632,7 @@ function SystemAlertsTab() {
 
   const handleApprove = async (questionId: number) => {
     try {
-      await api.post(`/api/v1/admin/quiz/questions/${questionId}/approve`);
+      await api.post(`/admin/quizzes/questions/${questionId}/approve`);
       toast.success("Question approved");
       queryClient.invalidateQueries({ queryKey: ["system-alerts"] });
     } catch {
@@ -471,7 +642,7 @@ function SystemAlertsTab() {
 
   const handleReject = async (questionId: number) => {
     try {
-      await api.post(`/api/v1/admin/quiz/questions/${questionId}/reject`);
+      await api.post(`/admin/quizzes/questions/${questionId}/reject`);
       toast.success("Question rejected");
       queryClient.invalidateQueries({ queryKey: ["system-alerts"] });
     } catch {
@@ -483,6 +654,15 @@ function SystemAlertsTab() {
 
   return (
       <div>
+        {previewAlert && (
+            <QuestionPreviewModal
+                alert={previewAlert}
+                onClose={() => setPreviewAlert(null)}
+                onApprove={handleApprove}
+                onReject={handleReject}
+            />
+        )}
+
         <div className="flex items-start justify-between mb-6">
           <div>
             <h2 className="text-sm font-semibold text-secondary-600">Automated System Alerts</h2>
@@ -529,16 +709,20 @@ function SystemAlertsTab() {
               {alerts.map((alert: any) => {
                 const isUrgent = alert.type === "Payment" || alert.priority === "HIGH";
                 const isQuizSubmission = alert.type === "QUIZ_SUBMISSION";
+                const isActioned = !!alert.actionStatus;
+
                 return (
                     <div
                         key={alert.id}
                         className={cn(
                             "border rounded-lg p-5",
-                            isUrgent
-                                ? "bg-red-50/40 border-red-200"
-                                : isQuizSubmission
-                                    ? "bg-blue-50/30 border-blue-200"
-                                    : "bg-white border-gray-200"
+                            isActioned
+                                ? "bg-gray-50 border-gray-200 opacity-70"
+                                : isUrgent
+                                    ? "bg-red-50/40 border-red-200"
+                                    : isQuizSubmission
+                                        ? "bg-blue-50/30 border-blue-200"
+                                        : "bg-white border-gray-200"
                         )}
                     >
                       <div className="flex items-start justify-between gap-4 mb-2">
@@ -546,40 +730,60 @@ function SystemAlertsTab() {
                           <AlertTriangle
                               size={16}
                               className={
-                                isUrgent
-                                    ? "text-red-500 shrink-0"
-                                    : isQuizSubmission
-                                        ? "text-blue-500 shrink-0"
-                                        : "text-yellow-500 shrink-0"
+                                isActioned ? "text-gray-400 shrink-0" :
+                                    isUrgent ? "text-red-500 shrink-0" :
+                                        isQuizSubmission ? "text-blue-500 shrink-0" :
+                                            "text-yellow-500 shrink-0"
                               }
                           />
                           <p className={cn(
                               "text-sm font-semibold",
-                              isUrgent ? "text-red-600" : isQuizSubmission ? "text-blue-600" : "text-secondary-600"
+                              isActioned ? "text-gray-400" :
+                                  isUrgent ? "text-red-600" :
+                                      isQuizSubmission ? "text-blue-600" :
+                                          "text-secondary-600"
                           )}>
                             {alert.title}
                           </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
+                          {isActioned && (
+                              <span className={cn(
+                                  "text-xs px-2 py-0.5 rounded-full font-medium",
+                                  alert.actionStatus === "APPROVED"
+                                      ? "bg-green-50 text-green-600"
+                                      : "bg-red-50 text-red-500"
+                              )}>
+                        {alert.actionStatus === "APPROVED" ? "✓ Approved" : "✗ Rejected"}
+                      </span>
+                          )}
                           <span className={cn(
                               "text-xs px-2 py-0.5 rounded-full",
                               alert.priority === "HIGH" ? "bg-red-50 text-red-500" :
                                   alert.priority === "MEDIUM" ? "bg-yellow-50 text-yellow-600" :
                                       "bg-gray-100 text-gray-500"
                           )}>
-                            {alert.priority}
-                          </span>
+                      {alert.priority}
+                    </span>
                         </div>
                       </div>
 
                       <p className="text-sm text-secondary-500 mb-4 leading-relaxed">{alert.message}</p>
 
                       <div className="flex gap-2 flex-wrap">
-                        {alert.actionLabel && alert.actionUrl && !isQuizSubmission && (
-                            <button className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-md transition-colors">
-                              {alert.actionLabel}
-                            </button>
-                        )}
+                        {/* Single View button for all */}
+                        <button
+                            onClick={() => setPreviewAlert(alert)}
+                          className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-md transition-colors">
+                          View
+                        </button>
+
+                        {/* Non-quiz non-payment action button */}
+                        {!isQuizSubmission
+                            && alert.type !== "Payment"
+                            && alert.type !== "Subscription"}
+
+
                         {(alert.type === "Payment" || alert.type === "Subscription") && (
                             <>
                               <button className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-md transition-colors">
@@ -590,7 +794,9 @@ function SystemAlertsTab() {
                               </button>
                             </>
                         )}
-                        {isQuizSubmission && (
+
+                        {/* Quiz approve/reject — only when not actioned */}
+                        {isQuizSubmission && !isActioned && (
                             <>
                               <button
                                   onClick={() => handleApprove(alert.relatedEntityId)}
