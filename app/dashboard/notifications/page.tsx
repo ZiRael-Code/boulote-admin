@@ -16,6 +16,9 @@ import {
   useSendJobInvites,
   useSystemAlerts,
 } from "@/hooks/use-communication";
+import {useQueryClient} from "@tanstack/react-query";
+import api from "@/lib/api/axios-config";
+import toast from "react-hot-toast";
 
 function StarRating({ rating, max = 5, size = 13 }: { rating: number; max?: number; size?: number }) {
   return (
@@ -445,14 +448,36 @@ function JobInvitesTab() {
   );
 }
 
+
 function SystemAlertsTab() {
   const [typeFilter, setTypeFilter]         = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
+  const queryClient = useQueryClient();
 
   const { data: alerts, isLoading } = useSystemAlerts({
     type: typeFilter || undefined,
     priority: priorityFilter || undefined,
   });
+
+  const handleApprove = async (questionId: number) => {
+    try {
+      await api.post(`/api/v1/admin/quiz/questions/${questionId}/approve`);
+      toast.success("Question approved");
+      queryClient.invalidateQueries({ queryKey: ["system-alerts"] });
+    } catch {
+      toast.error("Failed to approve question");
+    }
+  };
+
+  const handleReject = async (questionId: number) => {
+    try {
+      await api.post(`/api/v1/admin/quiz/questions/${questionId}/reject`);
+      toast.success("Question rejected");
+      queryClient.invalidateQueries({ queryKey: ["system-alerts"] });
+    } catch {
+      toast.error("Failed to reject question");
+    }
+  };
 
   if (isLoading) return <LoadingSpinner message="Loading alerts..." className="py-12" />;
 
@@ -472,6 +497,7 @@ function SystemAlertsTab() {
                 className="border border-gray-200 rounded-md px-3 py-2 text-sm text-secondary-500 bg-white"
             >
               <option value="">All Alert types</option>
+              <option value="QUIZ_SUBMISSION">Quiz Submission</option>
               <option value="Payment">Payment</option>
               <option value="Subscription">Subscription</option>
               <option value="Job">Job</option>
@@ -502,40 +528,54 @@ function SystemAlertsTab() {
             <div className="flex flex-col gap-4">
               {alerts.map((alert: any) => {
                 const isUrgent = alert.type === "Payment" || alert.priority === "HIGH";
+                const isQuizSubmission = alert.type === "QUIZ_SUBMISSION";
                 return (
                     <div
                         key={alert.id}
                         className={cn(
                             "border rounded-lg p-5",
-                            isUrgent ? "bg-red-50/40 border-red-200" : "bg-white border-gray-200"
+                            isUrgent
+                                ? "bg-red-50/40 border-red-200"
+                                : isQuizSubmission
+                                    ? "bg-blue-50/30 border-blue-200"
+                                    : "bg-white border-gray-200"
                         )}
                     >
                       <div className="flex items-start justify-between gap-4 mb-2">
                         <div className="flex items-center gap-2">
                           <AlertTriangle
                               size={16}
-                              className={isUrgent ? "text-red-500 shrink-0" : "text-yellow-500 shrink-0"}
+                              className={
+                                isUrgent
+                                    ? "text-red-500 shrink-0"
+                                    : isQuizSubmission
+                                        ? "text-blue-500 shrink-0"
+                                        : "text-yellow-500 shrink-0"
+                              }
                           />
-                          <p className={cn("text-sm font-semibold", isUrgent ? "text-red-600" : "text-secondary-600")}>
+                          <p className={cn(
+                              "text-sm font-semibold",
+                              isUrgent ? "text-red-600" : isQuizSubmission ? "text-blue-600" : "text-secondary-600"
+                          )}>
                             {alert.title}
                           </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                    <span className={cn(
-                        "text-xs px-2 py-0.5 rounded-full",
-                        alert.priority === "HIGH" ? "bg-red-50 text-red-500" :
-                            alert.priority === "MEDIUM" ? "bg-yellow-50 text-yellow-600" :
-                                "bg-gray-100 text-gray-500"
-                    )}>
-                      {alert.priority}
-                    </span>
+                          <span className={cn(
+                              "text-xs px-2 py-0.5 rounded-full",
+                              alert.priority === "HIGH" ? "bg-red-50 text-red-500" :
+                                  alert.priority === "MEDIUM" ? "bg-yellow-50 text-yellow-600" :
+                                      "bg-gray-100 text-gray-500"
+                          )}>
+                            {alert.priority}
+                          </span>
                         </div>
                       </div>
 
                       <p className="text-sm text-secondary-500 mb-4 leading-relaxed">{alert.message}</p>
 
                       <div className="flex gap-2 flex-wrap">
-                        {alert.actionLabel && alert.actionUrl && (
+                        {alert.actionLabel && alert.actionUrl && !isQuizSubmission && (
                             <button className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-md transition-colors">
                               {alert.actionLabel}
                             </button>
@@ -550,6 +590,22 @@ function SystemAlertsTab() {
                               </button>
                             </>
                         )}
+                        {isQuizSubmission && (
+                            <>
+                              <button
+                                  onClick={() => handleApprove(alert.relatedEntityId)}
+                                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
+                              >
+                                Approve Question
+                              </button>
+                              <button
+                                  onClick={() => handleReject(alert.relatedEntityId)}
+                                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors"
+                              >
+                                Reject
+                              </button>
+                            </>
+                        )}
                       </div>
                     </div>
                 );
@@ -559,6 +615,7 @@ function SystemAlertsTab() {
       </div>
   );
 }
+
 
 export default function AdminNotificationsPage() {
   const router = useRouter();
