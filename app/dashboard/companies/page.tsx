@@ -13,6 +13,7 @@ import { Pagination } from "@/components/ui/pagination";
 import {
   useCompaniesDashboard,
   useCompanies,
+  useCompanyFilterOptions,
 } from "@/hooks/use-companies";
 import { formatRelativeTime } from "@/lib/utils/format-date";
 import type { Company } from "@/lib/types/company";
@@ -20,11 +21,24 @@ import type { Company } from "@/lib/types/company";
 export default function CompaniesPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [size, setSize] = useState("");
+  const [plan, setPlan] = useState("");
 
   const { data: dashboardData, isLoading: isLoadingStats } =
     useCompaniesDashboard(true);
+  const { data: filterOptions } = useCompanyFilterOptions(true);
   const { data: companiesData, isLoading: isLoadingCompanies } =
-    useCompanies(true);
+    useCompanies(true, {
+      search,
+      status,
+      industry,
+      size,
+      plan,
+      page: currentPage - 1,
+    });
 
   const stats = dashboardData?.stats;
   const companies = companiesData?.content || [];
@@ -77,25 +91,78 @@ export default function CompaniesPage() {
             <input
               type="text"
               placeholder="Search"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full h-12 pl-4 pr-12 border border-neutral-500 rounded-md text-base"
             />
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
           </div>
 
-          <select className="h-12 px-4 border border-neutral-500 rounded-md text-base text-neutral-500 bg-white">
-            <option>All Industry</option>
+          <select
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="h-12 px-4 border border-neutral-500 rounded-md text-base text-neutral-500 bg-white"
+          >
+            <option value="">All Status</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="ACTIVE">Active</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="DEACTIVATED">Deactivated</option>
           </select>
 
-          <select className="h-12 px-4 border border-neutral-500 rounded-md text-base text-neutral-500 bg-white">
-            <option>All Sizes</option>
+          <select
+            value={industry}
+            onChange={(e) => {
+              setIndustry(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="h-12 px-4 border border-neutral-500 rounded-md text-base text-neutral-500 bg-white"
+          >
+            <option value="">All Industry</option>
+            {filterOptions?.industries.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
           </select>
 
-          <select className="h-12 px-4 border border-neutral-500 rounded-md text-base text-neutral-500 bg-white">
-            <option>All plans</option>
+          <select
+            value={size}
+            onChange={(e) => {
+              setSize(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="h-12 px-4 border border-neutral-500 rounded-md text-base text-neutral-500 bg-white"
+          >
+            <option value="">All Sizes</option>
+            {filterOptions?.sizes.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
           </select>
 
-          <select className="h-12 px-4 border border-neutral-500 rounded-md text-base text-neutral-500 bg-white">
-            <option>All Status</option>
+          <select
+            value={plan}
+            onChange={(e) => {
+              setPlan(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="h-12 px-4 border border-neutral-500 rounded-md text-base text-neutral-500 bg-white"
+          >
+            <option value="">All Plans</option>
+            {filterOptions?.plans.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
           </select>
 
           <Button variant="outline" className="h-12 px-6 border border-neutral-500">
@@ -124,8 +191,8 @@ export default function CompaniesPage() {
             <EmptyState message="No companies found" />
           </div>
         ) : (
-          <div className="bg-white border border-border-500 rounded-lg overflow-hidden">
-            <table className="w-full">
+          <div className="bg-white border border-border-500 rounded-lg overflow-x-auto">
+            <table className="w-full min-w-[900px]">
               <thead className="bg-neutral-100">
                 <tr>
                   <th className="text-left px-6 py-4 text-sm font-medium text-secondary-500">
@@ -186,7 +253,7 @@ function CompanyRow({
   company: Company;
   router: ReturnType<typeof useRouter>;
 }) {
-  const isPending = company.status === "IN_REVIEW" || company.status === "Pending";
+  const isPending = company.status === "Pending";
 
   return (
     <tr className="hover:bg-neutral-50">
@@ -237,6 +304,9 @@ function CompanyRow({
               <Button
                 variant="outline"
                 className="h-10 px-6 border border-error-500 text-error-500"
+                onClick={() =>
+                  router.push(`/dashboard/companies/review/${company.id}`)
+                }
               >
                 <span className="text-sm font-medium">Reject</span>
               </Button>

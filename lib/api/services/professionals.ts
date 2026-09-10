@@ -5,6 +5,7 @@ import type {
   PendingApprovalsResponse,
   ProfessionalProfile,
   ProfessionalReview,
+  QuizSessionDetail,
 } from "@/lib/types/professional";
 
 export async function getProfessionalsDashboard(): Promise<ProfessionalsDashboardResponse> {
@@ -36,6 +37,16 @@ export async function getProfessionals(
 
   const response = await axiosInstance.get<ProfessionalsResponse>(
     `/admin/professionals/getProfessionals?${params.toString()}`,
+  );
+  return response.data;
+}
+
+export async function getQuizSessionDetail(
+  professionalId: number,
+  sessionId: number,
+): Promise<QuizSessionDetail> {
+  const response = await axiosInstance.get<QuizSessionDetail>(
+    `/admin/professionals/quiz-session/${professionalId}/${sessionId}`,
   );
   return response.data;
 }

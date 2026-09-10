@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Building2 } from "lucide-react";
+import Link from "next/link";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { NotificationItem } from "@/components/dashboard/notification-item";
 import { ActivityItem } from "@/components/dashboard/activity-item";
@@ -40,47 +40,58 @@ export default function DashboardPage() {
 
   if (!data) return null;
 
+  const professionalsIcon = "/assets/icon/dashboard/professionals.svg";
+  const companiesIcon = "/assets/icon/dashboard/companies.svg";
+
   const stats = [
     {
       title: "Total Professional",
       value: data.totalProfessionals.toLocaleString(),
       change: formatPercentage(data.professionalGrowthPercentage),
+      changePositive: data.professionalGrowthPercentage >= 0,
+      icon: professionalsIcon,
     },
     {
       title: "Companies Registered",
       value: data.totalCompanies.toLocaleString(),
       change: formatPercentage(data.companyGrowthPercentage),
+      changePositive: data.companyGrowthPercentage >= 0,
+      icon: companiesIcon,
     },
     {
       title: "Active Professionals",
       value: data.activeProfessionals.toLocaleString(),
       change: formatPercentage(data.professionalGrowthPercentage),
+      changePositive: data.professionalGrowthPercentage >= 0,
+      icon: professionalsIcon,
     },
     {
       title: "Active Companies",
       value: data.activeCompanies.toLocaleString(),
       change: formatPercentage(data.companyGrowthPercentage),
+      changePositive: data.companyGrowthPercentage >= 0,
+      icon: companiesIcon,
     },
     {
       title: "Inactive Professionals",
       value: data.inactiveProfessionals.toLocaleString(),
-      change: formatPercentage(0),
+      icon: professionalsIcon,
     },
     {
       title: "Inactive Companies",
       value: data.inactiveCompanies.toLocaleString(),
-      change: formatPercentage(0),
-      icon: Building2,
+      icon: companiesIcon,
     },
   ];
 
+  const URGENT_TYPES = ["PAYMENT_DISPUTE", "SYSTEM_ALERT", "SECURITY_ALERT"];
+
   const getNotificationBadge = (type: string): "urgent" | "pending" => {
-    if (type === "PAYMENT_DISPUTE" || type === "SYSTEM_UPDATE") return "urgent";
-    return "pending";
+    return URGENT_TYPES.includes(type) ? "urgent" : "pending";
   };
 
   const getActivityIcon = (type: string) => {
-    if (type === "PAYMENT_DISPUTE")
+    if (URGENT_TYPES.includes(type) || type === "CONTENT_FLAGGED")
       return "/assets/icon/dashboard/success.svg";
     return "/assets/icon/dashboard/sparkles.svg";
   };
@@ -99,13 +110,15 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {stats.map((stat, index) => (
               <StatCard
                 key={index}
                 title={stat.title}
                 value={stat.value}
                 change={stat.change}
+                changePositive={stat.changePositive}
+                icon={stat.icon}
               />
             ))}
           </div>
@@ -116,21 +129,25 @@ export default function DashboardPage() {
                 Notifications
               </h2>
               <div className="flex flex-col gap-10">
-                {data.notifications.map((notification, index) => (
-                  <NotificationItem
-                    key={index}
-                    title={notification.title}
-                    description={notification.message}
-                    badge={getNotificationBadge(notification.type)}
-                  />
-                ))}
+                {data.notifications.length === 0 ? (
+                  <p className="text-sm text-neutral-400">No unread notifications.</p>
+                ) : (
+                  data.notifications.map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      title={notification.title}
+                      description={notification.message}
+                      badge={getNotificationBadge(notification.type)}
+                    />
+                  ))
+                )}
               </div>
-              <a
-                href="#"
+              <Link
+                href="/dashboard/notifications"
                 className="text-base font-medium text-primary-500 hover:text-primary-600 capitalize"
               >
                 View All Notifications →
-              </a>
+              </Link>
             </div>
 
             <div className="border border-border-500 rounded-md p-4 lg:p-6 flex flex-col gap-10">
@@ -138,15 +155,19 @@ export default function DashboardPage() {
                 Recent System Activity
               </h2>
               <div className="flex flex-col gap-10">
-                {data.systemActivities.map((activity, index) => (
-                  <ActivityItem
-                    key={index}
-                    title={activity.title}
-                    description={activity.message}
-                    time={activity.timeAgo}
-                    icon={getActivityIcon(activity.type)}
-                  />
-                ))}
+                {data.systemActivities.length === 0 ? (
+                  <p className="text-sm text-neutral-400">No recent activity.</p>
+                ) : (
+                  data.systemActivities.map((activity, index) => (
+                    <ActivityItem
+                      key={index}
+                      title={activity.title}
+                      description={activity.message}
+                      time={activity.timeAgo}
+                      icon={getActivityIcon(activity.type)}
+                    />
+                  ))
+                )}
               </div>
             </div>
           </div>

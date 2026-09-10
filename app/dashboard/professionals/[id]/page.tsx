@@ -8,8 +8,9 @@ import { Avatar } from "@/components/ui/avatar";
 import { StatCard } from "@/components/ui/stat-card";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ErrorState } from "@/components/ui/error-state";
-import {useProfessionalProfile, useProfessionalReviews} from "@/hooks/use-professionals";
+import {useProfessionalProfile, useProfessionalReviews, useQuizSessionDetail} from "@/hooks/use-professionals";
 import { formatDate } from "@/lib/utils/format-date";
+import { X } from "lucide-react";
 import { useState } from "react";
 
 type TabType = "overview" | "quiz-history" | "activity" | "reviews";
@@ -37,7 +38,7 @@ export default function ProfessionalProfilePage() {
       .toUpperCase();
 
   return (
-      <div className="flex flex-col gap-8 px-8 py-8">
+      <div className="flex flex-col gap-8 px-4 md:px-8 py-8">
         <div className="flex items-center gap-4">
           <BackButton />
           <h1 className="text-2xl font-semibold text-secondary-500">
@@ -45,13 +46,13 @@ export default function ProfessionalProfilePage() {
           </h1>
         </div>
 
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="flex gap-6">
             <Avatar initials={initials} size="xl" />
             <div className="flex flex-col gap-2">
               <h2 className="text-2xl font-semibold text-secondary-500">{profile.name}</h2>
               <p className="text-base text-secondary-500">{profile.role}</p>
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center flex-wrap gap-2 text-sm">
                 <span className="text-warning-500">&#9733;</span>
                 <span className="text-secondary-500">{profile.rating?.toFixed(1)}/5</span>
                 <span className="text-neutral-500">Based on {profile.reviewCount} reviews</span>
@@ -59,7 +60,7 @@ export default function ProfessionalProfilePage() {
               </div>
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
               { !profile.mentorEligibility.isMentor ?
               <Button
                   className="bg-primary-500 text-white px-6 py-3"
@@ -90,7 +91,7 @@ export default function ProfessionalProfilePage() {
         />
 
         {activeTab === "overview" && <OverviewTab profile={profile} router={router} id={id} />}
-        {activeTab === "quiz-history" && <QuizHistoryTab profile={profile} />}
+        {activeTab === "quiz-history" && <QuizHistoryTab profile={profile} professionalId={id} />}
         {activeTab === "activity" && <ActivityTab profile={profile} />}
           {activeTab === "reviews" && <ReviewsTab id={id} />}
       </div>
@@ -108,7 +109,7 @@ function OverviewTab({
 }) {
   return (
       <div className="flex flex-col gap-8">
-        <div className="grid grid-cols-6 gap-6 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 text-sm">
           <div className="flex flex-col gap-1">
             <p className="text-xs text-neutral-500 uppercase">EMAIL</p>
             <p className="text-sm text-secondary-500">{profile.email}</p>
@@ -202,12 +203,13 @@ function OverviewTab({
   );
 }
 
-function QuizHistoryTab({ profile }: { profile: any }) {
+function QuizHistoryTab({ profile, professionalId }: { profile: any; professionalId: number }) {
   const quizStats = profile.quizStats;
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
 
   return (
       <div className="flex flex-col gap-8">
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <StatCard value={quizStats?.quizzesTaken ?? 0} label="Quiz Taken" />
           <StatCard value={`${quizStats?.averageScore ?? 0}%`} label="Average score" />
           <StatCard value={quizStats?.skillsCertified ?? 0} label="Skills certified" />
@@ -218,12 +220,12 @@ function QuizHistoryTab({ profile }: { profile: any }) {
           {quizStats?.quizHistory?.length > 0 ? (
               quizStats.quizHistory.map((quiz: any, index: number) => (
                   <div
-                      key={index}
-                      className="border border-border-500 rounded-lg p-6 flex items-center justify-between"
+                      key={quiz.sessionId ?? index}
+                      className="border border-border-500 rounded-lg p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                   >
                     <div className="flex flex-col gap-2">
                       <h4 className="text-base font-semibold text-secondary-500">{quiz.quizName}</h4>
-                      <div className="flex gap-3 text-sm text-neutral-500">
+                      <div className="flex flex-wrap gap-3 text-sm text-neutral-500">
                         <span>{formatDate(quiz.dateTaken)}</span>
                         <span>•</span>
                         <span>{quiz.questionCount} questions</span>
@@ -233,7 +235,12 @@ function QuizHistoryTab({ profile }: { profile: any }) {
                     </div>
                     <div className="flex items-center gap-4">
                       <span className="text-lg font-medium text-primary-500">{quiz.percentage}</span>
-                      <Button variant="outline" className="border border-neutral-500 px-6 py-2">
+                      <Button
+                          variant="outline"
+                          className="border border-neutral-500 px-6 py-2"
+                          onClick={() => setSelectedSessionId(quiz.sessionId)}
+                          disabled={!quiz.sessionId}
+                      >
                         <span className="text-sm">View Details</span>
                       </Button>
                     </div>
@@ -242,6 +249,94 @@ function QuizHistoryTab({ profile }: { profile: any }) {
           ) : (
               <p className="text-sm text-neutral-500">No quiz history available</p>
           )}
+        </div>
+
+        {selectedSessionId && (
+            <QuizSessionDetailModal
+                professionalId={professionalId}
+                sessionId={selectedSessionId}
+                onClose={() => setSelectedSessionId(null)}
+            />
+        )}
+      </div>
+  );
+}
+
+function QuizSessionDetailModal({
+  professionalId,
+  sessionId,
+  onClose,
+}: {
+  professionalId: number;
+  sessionId: number;
+  onClose: () => void;
+}) {
+  const { data, isLoading, error } = useQuizSessionDetail(professionalId, sessionId, true);
+
+  return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto flex flex-col">
+          <div className="flex items-center justify-between p-6 border-b border-border-500 sticky top-0 bg-white">
+            <h2 className="text-lg font-semibold text-secondary-500">Quiz Attempt Details</h2>
+            <button
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center hover:bg-neutral-100 rounded-md"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-6 flex flex-col gap-6">
+            {isLoading ? (
+                <LoadingSpinner message="Loading quiz details..." className="py-12" />
+            ) : error || !data ? (
+                <p className="text-sm text-error-600">Failed to load quiz attempt details.</p>
+            ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-xs text-neutral-500 uppercase">Score</p>
+                      <p className="text-sm font-medium text-secondary-500">{data.score}%</p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-xs text-neutral-500 uppercase">Correct</p>
+                      <p className="text-sm font-medium text-secondary-500">
+                        {data.correctAnswers}/{data.totalQuestions}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-xs text-neutral-500 uppercase">Time Taken</p>
+                      <p className="text-sm font-medium text-secondary-500">{data.timeTakenSeconds}s</p>
+                    </div>
+                  </div>
+
+                  {data.performanceFeedback && (
+                      <p className="text-sm text-neutral-500">{data.performanceFeedback}</p>
+                  )}
+
+                  <div className="flex flex-col gap-3">
+                    {data.answers?.map((answer, index) => (
+                        <div
+                            key={index}
+                            className={`border rounded-md p-4 flex flex-col gap-2 ${
+                                answer.isCorrect ? "border-success-500" : "border-error-500"
+                            }`}
+                        >
+                          <p className="text-sm font-medium text-secondary-500">{answer.questionText}</p>
+                          <div className="flex flex-col gap-1 text-sm">
+                            <span className={answer.isCorrect ? "text-success-600" : "text-error-600"}>
+                              Selected: {answer.selectedAnswer || "—"}
+                            </span>
+                            {!answer.isCorrect && (
+                                <span className="text-neutral-500">Correct: {answer.correctAnswer}</span>
+                            )}
+                          </div>
+                        </div>
+                    ))}
+                  </div>
+                </>
+            )}
+          </div>
         </div>
       </div>
   );
@@ -294,7 +389,7 @@ function ReviewsTab({ id }: { id: number }) {
         <div className="flex flex-col gap-4">
             {reviews.map((review: any, index: number) => (
                 <div key={index} className="border border-border-500 rounded-lg p-6 flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-base font-semibold text-secondary-500">{review.companyName}</p>
                         <div className="flex items-center gap-1">
                             {Array.from({ length: 5 }).map((_, i) => (
@@ -306,7 +401,7 @@ function ReviewsTab({ id }: { id: number }) {
                         </div>
                     </div>
 
-                    <div className="flex gap-6 text-sm">
+                    <div className="flex flex-wrap gap-6 text-sm">
                         <div className="flex flex-col gap-1">
                             <p className="text-xs text-neutral-500 uppercase">QUALITY OF WORK</p>
                             <p className="text-sm text-secondary-500">{review.qualityOfWork}/5</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
@@ -10,11 +10,12 @@ import { useAuth } from "@/hooks/use-auth";
 import Input from "@/components/ui/input";
 import PasswordInput from "@/components/ui/input/password-input";
 import Button from "@/components/ui/button";
+import { getErrorMessage } from "@/lib/types/api";
+import type { ApiError } from "@/lib/types/api";
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const resetSuccess = searchParams.get("reset") === "success";
-  const [enable2FA, setEnable2FA] = useState(false);
 
   const { login, isLoginLoading, loginError } = useAuth();
 
@@ -85,7 +86,7 @@ function LoginForm() {
 
               {loginError && (
                 <div className="bg-error-50 border border-error-500 text-error-600 px-4 py-3 rounded-md text-sm">
-                  {loginError.message || "Invalid email or password"}
+                  {getErrorMessage(loginError as ApiError, "Invalid email or password")}
                 </div>
               )}
 
@@ -105,18 +106,6 @@ function LoginForm() {
                 fullWidth
                 {...register("password")}
               />
-
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={enable2FA}
-                  onChange={(e) => setEnable2FA(e.target.checked)}
-                  className="w-4 h-4 text-primary-500 border-border-500 rounded focus:ring-primary-500"
-                />
-                <span className="text-sm font-normal leading-[16.8px] tracking-[0.1px] text-black">
-                  Enable 2-factor authentication
-                </span>
-              </label>
 
               <Button
                 type="submit"

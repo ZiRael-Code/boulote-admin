@@ -74,3 +74,10 @@ export async function getSystemAlerts(params: { type?: string; priority?: string
     const response = await axiosInstance.get(`/admin/communication/system-alerts?${p.toString()}`);
     return response.data;
 }
+
+export async function notifyUserForAlert(alertId: number, message: string, priority: string) {
+    await axiosInstance.post(`/admin/communication/system-alerts/${alertId}/notify-user`, {
+        message,
+        priority,
+    });
+}

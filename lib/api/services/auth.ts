@@ -26,12 +26,7 @@ export const authService = {
   },
 
   logout: async (): Promise<void> => {
-    await api.post("/user/logout");
-  },
-
-  getCurrentUser: async () => {
-    const response = await api.get("/admin/me");
-    return response.data;
+    await api.post("/user/logOut");
   },
 };
 

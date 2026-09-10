@@ -7,7 +7,7 @@ import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import Textarea from "@/components/ui/input/textarea";
 import Select from "@/components/ui/input/select";
-import {useCreateQuiz, useSaveQuizDraft, useProfessionsWithSkills, useQuizCategoryOptions} from "@/hooks/use-quizzes";
+import {useCreateQuiz, useSaveQuizDraft, useQuizCategoryOptions} from "@/hooks/use-quizzes";
 import type { CreateQuizRequest } from "@/lib/api/services/quizzes";
 
 type TabType = "basic-info" | "preview";
@@ -18,14 +18,11 @@ export default function CreateQuizPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   const { data: categoryOptions = [] } = useQuizCategoryOptions(true);
-  const { data: professionsData } = useProfessionsWithSkills(true);
 
   const [formData, setFormData] = useState<Partial<CreateQuizRequest>>({
     title: "",
-    difficulty: "BEGINNER",
+    difficulty: "MEDIUM",
     adminNotes: "",
-    estimatedLevel: 30,
-    tags: [],
     questions: [
       {
         questionText: "",
@@ -37,13 +34,6 @@ export default function CreateQuizPage() {
     ],
     timeLimit: { enabled: false, duration: 60 },
     passingScore: 70,
-    questionOrder: "SEQUENTIAL",
-    showResult: "AFTER_COMPLETION",
-    accessControl: {
-      requireLogin: true,
-      verifiedProfessionals: false,
-      premiumFeature: false,
-    },
   });
 
   const createMutation = useCreateQuiz();
@@ -175,11 +165,11 @@ export default function CreateQuizPage() {
                   <Select
                       label="Difficulty Level"
                       options={[
-                        { value: "BEGINNER", label: "Beginner" },
-                        { value: "INTERMEDIATE", label: "Intermediate" },
-                        { value: "ADVANCED", label: "Advanced" },
+                        { value: "EASY", label: "Easy" },
+                        { value: "MEDIUM", label: "Medium" },
+                        { value: "HARD", label: "Hard" },
                       ]}
-                      value={formData.difficulty || "BEGINNER"}
+                      value={formData.difficulty || "MEDIUM"}
                       onChange={(e) => handleInputChange("difficulty", e.target.value)}
                       fullWidth
                   />
@@ -190,20 +180,6 @@ export default function CreateQuizPage() {
                       onChange={(e) => handleInputChange("adminNotes", e.target.value)}
                       fullWidth
                   />
-                  <div className="flex gap-2">
-                    <Input
-                        label="Estimated level (minutes)"
-                        type="number"
-                        value={formData.estimatedLevel || 30}
-                        onChange={(e) => handleInputChange("estimatedLevel", Number(e.target.value))}
-                        className="flex-1"
-                    />
-                    <Select
-                        options={[{ value: "minutes", label: "Minutes" }]}
-                        value="minutes"
-                        className="mt-6"
-                    />
-                  </div>
                   <Select
                       label="Category"
                       placeholder="Select Category"
@@ -212,56 +188,6 @@ export default function CreateQuizPage() {
                       onChange={(e) => handleInputChange("category", e.target.value)}
                       fullWidth
                   />
-
-                  <Select
-                      label="Profession (for tags)"
-                      placeholder="Select Profession"
-                      options={(professionsData ?? []).map((p: any) => ({ value: p.name, label: p.name }))}
-                      value={(formData as any).selectedProfession || ""}
-                      onChange={(e) => handleInputChange("selectedProfession", e.target.value)}
-                      fullWidth
-                  />
-
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-secondary-500">Tags</label>
-                    {(formData as any).selectedProfession && (
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {(professionsData ?? [])
-                              .find((p: any) => p.name === (formData as any).selectedProfession)
-                              ?.professionSkills?.map((s: any) => {
-                                const isSelected = formData.tags?.includes(s.name);
-                                return (
-                                    <button
-                                        key={s.name}
-                                        type="button"
-                                        onClick={() => {
-                                          const current = formData.tags ?? [];
-                                          handleInputChange(
-                                              "tags",
-                                              isSelected
-                                                  ? current.filter((t) => t !== s.name)
-                                                  : [...current, s.name]
-                                          );
-                                        }}
-                                        className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                                            isSelected
-                                                ? "bg-primary-500 text-white border-primary-500"
-                                                : "bg-white text-secondary-500 border-neutral-500 hover:border-primary-500"
-                                        }`}
-                                    >
-                                      {s.name}
-                                    </button>
-                                );
-                              })}
-                        </div>
-                    )}
-                    <p className="text-xs text-neutral-400">
-                      {formData.tags?.length
-                          ? `Selected: ${formData.tags.join(", ")}`
-                          : "Select a profession above then pick skills as tags"}
-                    </p>
-                  </div>
                 </div>
               </div>
 
@@ -301,7 +227,6 @@ export default function CreateQuizPage() {
                     options={[
                       { value: "MULTIPLE_CHOICE", label: "Multiple choice" },
                       { value: "TRUE_FALSE", label: "True/False" },
-                      { value: "TEXT_INPUT", label: "Text input" },
                     ]}
                     value={currentQuestion.questionType}
                     onChange={(e) => handleQuestionChange("questionType", e.target.value)}
@@ -408,21 +333,6 @@ export default function CreateQuizPage() {
                         </div>
                     )}
                   </div>
-                  <Select
-                      label="Attempts"
-                      placeholder="Select attempts"
-                      options={[
-                        { value: "1", label: "1" },
-                        { value: "2", label: "2" },
-                        { value: "3", label: "3" },
-                        { value: "unlimited", label: "Unlimited" },
-                      ]}
-                      value={formData.attempts?.toString() || ""}
-                      onChange={(e) =>
-                          handleInputChange("attempts", e.target.value === "unlimited" ? undefined : Number(e.target.value))
-                      }
-                      fullWidth
-                  />
                   <Input
                       label="Passing score (%)"
                       type="number"
@@ -430,51 +340,6 @@ export default function CreateQuizPage() {
                       onChange={(e) => handleInputChange("passingScore", Number(e.target.value))}
                       fullWidth
                   />
-                  <Select
-                      label="Question order"
-                      options={[
-                        { value: "SEQUENTIAL", label: "Sequential" },
-                        { value: "RANDOM", label: "Random" },
-                      ]}
-                      value={formData.questionOrder || "SEQUENTIAL"}
-                      onChange={(e) => handleInputChange("questionOrder", e.target.value)}
-                      fullWidth
-                  />
-                  <Select
-                      label="Show result"
-                      options={[
-                        { value: "AFTER_COMPLETION", label: "After completion" },
-                        { value: "IMMEDIATELY", label: "Immediately" },
-                        { value: "NEVER", label: "Never" },
-                      ]}
-                      value={formData.showResult || "AFTER_COMPLETION"}
-                      onChange={(e) => handleInputChange("showResult", e.target.value)}
-                      fullWidth
-                  />
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <label className="text-sm font-medium text-secondary-500">Access Control</label>
-                  {[
-                    { field: "requireLogin", label: "Require login" },
-                    { field: "verifiedProfessionals", label: "Verified professionals only" },
-                    { field: "premiumFeature", label: "Premium feature" },
-                  ].map(({ field, label }) => (
-                      <div key={field} className="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            checked={(formData.accessControl as any)?.[field] || false}
-                            onChange={(e) =>
-                                handleInputChange("accessControl", {
-                                  ...formData.accessControl,
-                                  [field]: e.target.checked,
-                                })
-                            }
-                            className="w-5 h-5"
-                        />
-                        <label className="text-sm text-secondary-500">{label}</label>
-                      </div>
-                  ))}
                 </div>
               </div>
             </div>

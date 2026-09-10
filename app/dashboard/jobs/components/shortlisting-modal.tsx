@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import Button from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
+import { useAssignSelectedProfessional } from "@/hooks/use-jobs";
 import type { Job, ShortlistingResult, ShortlistedProfessional } from "@/lib/types/job";
 
 type ShortlistingResultsModalProps = {
@@ -16,6 +17,19 @@ export function ShortlistingResultsModal({
   results,
   onClose,
 }: ShortlistingResultsModalProps) {
+  const assignMutation = useAssignSelectedProfessional();
+
+  const handleAssign = (professionalId: number) => {
+    assignMutation.mutate(
+      {
+        projectId: job.id,
+        professionalId,
+        assignmentNotes: "BY SYSTEM",
+      },
+      { onSuccess: () => onClose() },
+    );
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
@@ -142,7 +156,12 @@ export function ShortlistingResultsModal({
                       >
                         View Profile
                       </Button>
-                      <Button className="bg-primary-500 text-white px-4 py-2">
+                      <Button
+                        className="bg-primary-500 text-white px-4 py-2"
+                        onClick={() => professional.id && handleAssign(professional.id)}
+                        loading={assignMutation.isPending}
+                        disabled={assignMutation.isPending}
+                      >
                         Assign to Project
                       </Button>
                     </div>

@@ -31,7 +31,7 @@ export default function ReviewCompanyApplicationPage() {
 
   const handleReject = () => {
     if (confirm("Are you sure you want to reject this company?")) {
-      rejectMutation.mutate({ companyId });
+      rejectMutation.mutate({ companyId, reason: adminNotes || undefined });
     }
   };
 

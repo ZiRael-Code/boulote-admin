@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export type AdminUser = {
   id: number;
@@ -31,7 +31,11 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
+      // sessionStorage, not localStorage: prevents one admin's login in a
+      // second tab from silently overwriting another admin's session on the
+      // same browser. Trade-off: closing a tab ends that session.
       name: "admin-auth-storage",
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );

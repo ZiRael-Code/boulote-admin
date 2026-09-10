@@ -6,10 +6,11 @@ import { usePendingJobs, useCompletedJobs } from "@/hooks/use-jobs";
 import { ActiveProcessesSection } from "./components/active-processes";
 import { PendingRequestsTab } from "./components/pending-tab";
 import { AIReviewTab } from "./components/ai-review-tab";
+import { AssignedJobsTab } from "./components/assigned-tab";
 import { OngoingJobsTab } from "./components/ongoing-tab";
 import { CompletedTab } from "./components/completed-tab";
 
-type TabType = "pending" | "ai-review" | "ongoing" | "completed";
+type TabType = "pending" | "ai-review" | "assigned" | "ongoing" | "completed";
 
 export default function JobsPage() {
   const [activeTab, setActiveTab] = useState<TabType>("pending");
@@ -43,6 +44,7 @@ export default function JobsPage() {
               countStyle: "bg-primary-200",
             },
             { value: "ai-review" as const, label: "AI Review" },
+            { value: "assigned" as const, label: "Assigned" },
             { value: "ongoing" as const, label: "Ongoing Jobs" },
             {
               value: "completed" as const,
@@ -58,6 +60,7 @@ export default function JobsPage() {
 
         {activeTab === "pending" && <PendingRequestsTab />}
         {activeTab === "ai-review" && <AIReviewTab enabled={activeTab === "ai-review"} />}
+        {activeTab === "assigned" && <AssignedJobsTab />}
         {activeTab === "ongoing" && <OngoingJobsTab />}
         {activeTab === "completed" && <CompletedTab />}
       </div>

@@ -18,8 +18,6 @@ import {
 } from "@/hooks/use-community";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
-type FlagReasonKey = "POTENTIAL_MISINFORMATION" | "SPAM" | "OFFENSIVE_LANGUAGE" | string;
-
 const reasonColors: Record<string, string> = {
   MISINFORMATION: "bg-orange-50 text-orange-500 border border-orange-200",
   SPAM: "bg-pink-50 text-pink-500 border border-pink-200",
@@ -27,6 +25,14 @@ const reasonColors: Record<string, string> = {
   COPYRIGHT: "bg-purple-50 text-purple-500 border border-purple-200",
   HARASSMENT: "bg-yellow-50 text-yellow-600 border border-yellow-200",
   OTHER: "bg-gray-100 text-gray-500 border border-gray-200",
+};
+
+const contentStatusColors: Record<string, string> = {
+  APPROVED: "bg-green-50 text-green-600 border border-green-200",
+  PENDING_APPROVAL: "bg-yellow-50 text-yellow-600 border border-yellow-200",
+  REJECTED: "bg-red-50 text-red-500 border border-red-200",
+  FLAGGED: "bg-orange-50 text-orange-500 border border-orange-200",
+  DELETED: "bg-gray-100 text-gray-500 border border-gray-200",
 };
 function FilterDropdown({ label, value, options, onChange }: {
   label: string;
@@ -201,7 +207,9 @@ function FlaggedContentTab() {
         ) : (
             <div className="flex flex-col gap-4">
               {items.map((item: any) => {
-                const isProcessing = approveFlag.isPending || removeFlag.isPending;
+                const isApprovingThis = approveFlag.isPending && approveFlag.variables === item.flagId;
+                const isRemovingThis = removeFlag.isPending && removeFlag.variables === item.flagId;
+                const isProcessing = isApprovingThis || isRemovingThis;
                 const isSelected = selected.includes(item.flagId);
 
                 return (
@@ -252,14 +260,14 @@ function FlaggedContentTab() {
                             disabled={isProcessing}
                             className="px-5 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50"
                         >
-                          {approveFlag.isPending ? <Loader2 size={14} className="animate-spin" /> : "Approve"}
+                          {isApprovingThis ? <Loader2 size={14} className="animate-spin" /> : "Approve"}
                         </button>
                         <button
                             onClick={() => removeFlag.mutate(item.flagId)}
                             disabled={isProcessing}
                             className="px-5 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50"
                         >
-                          {removeFlag.isPending ? <Loader2 size={14} className="animate-spin" /> : "Remove"}
+                          {isRemovingThis ? <Loader2 size={14} className="animate-spin" /> : "Remove"}
                         </button>
                       </div>
                     </div>
@@ -376,7 +384,7 @@ function AllContentTab() {
                             Status: {item.status} • {item.likeCount} likes • {item.replyCount} {item.replyCount === 1 ? "reply" : "replies"}
                           </p>
                         </div>
-                        <span className="text-xs font-medium px-3 py-1 rounded-full bg-green-50 text-green-600 border border-green-200 whitespace-nowrap">
+                        <span className={cn("text-xs font-medium px-3 py-1 rounded-full whitespace-nowrap", contentStatusColors[item.status] ?? "bg-gray-100 text-gray-500 border border-gray-200")}>
                     {item.status}
                   </span>
                       </div>
@@ -407,7 +415,7 @@ function AllContentTab() {
                       ) : (
                           <div className="border border-gray-200 rounded-md p-4 mb-4 text-sm text-secondary-500 leading-relaxed">
                             {item.title && (
-                                <p><span className="font-medium">{item.type === "ANSWER" ? "Question: " : "Question: "}</span>{item.title}</p>
+                                <p><span className="font-medium">Question: </span>{item.title}</p>
                             )}
                             <p className={item.title ? "mt-2" : ""}>
                               <span className="font-medium">{item.type === "ANSWER" ? "Answer: " : "Content: "}</span>{item.content}

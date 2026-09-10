@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
-  Search,
   ChevronDown,
   CheckCircle2,
   Loader2,
   AlertCircle,
 } from "lucide-react";
 import Button from "@/components/ui/button";
+import SearchInput from "@/components/ui/input/search-input";
+import Select from "@/components/ui/input/select";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { Pagination } from "@/components/ui/pagination";
 import {
   usePendingJobs,
   useStartAIShortlisting,
@@ -23,26 +26,21 @@ import type { Job } from "@/lib/types/job";
 import { formatRelativeTime } from "@/lib/utils/format-date";
 import { ShortlistingResultsModal } from "./shortlisting-modal";
 
+const BUDGET_OPTIONS = [
+  { value: "Under ₦500,000", label: "Under ₦500,000" },
+  { value: "₦500,000 - ₦2,000,000", label: "₦500,000 - ₦2,000,000" },
+  { value: "Over ₦2,000,000", label: "Over ₦2,000,000" },
+];
+
 export function PendingRequestsTab() {
-  const { data, isLoading, error } = usePendingJobs(true);
+  const [search, setSearch] = useState("");
+  const [budget, setBudget] = useState("");
+  const [page, setPage] = useState(0);
+  const { data, isLoading, error } = usePendingJobs(true, { search, budget, page });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const bulkShortlist = useBulkAIShortlisting();
 
-  if (isLoading) {
-    return (
-      <LoadingSpinner message="Loading pending jobs..." className="py-12" />
-    );
-  }
-
-  if (error) {
-    return <ErrorState title="Failed to load pending jobs" className="py-12" />;
-  }
-
-  if (!data || data.empty) {
-    return <EmptyState message="No pending jobs found" className="py-12" />;
-  }
-
-  const jobs = data.content ?? [];
+  const jobs = data?.content ?? [];
 
   const allSelected = jobs.length > 0 && selectedIds.length === jobs.length;
 
@@ -66,10 +64,14 @@ export function PendingRequestsTab() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex gap-4 items-center flex-wrap">
-        <div className="border border-neutral-500 rounded-md h-12 px-6 py-4 flex items-center justify-between w-[278px]">
-          <span className="text-lg font-light text-secondary-500">Search</span>
-          <Search className="w-6 h-6" />
-        </div>
+        <SearchInput
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
+          className="w-[278px]"
+        />
 
         <button className="border border-neutral-500 rounded-md px-4 py-2 flex gap-4 items-center">
           <span className="text-base font-normal text-neutral-500">
@@ -78,12 +80,16 @@ export function PendingRequestsTab() {
           <ChevronDown className="w-8 h-8" />
         </button>
 
-        <button className="border border-neutral-500 rounded-md px-4 py-2 flex gap-4 items-center">
-          <span className="text-base font-normal text-neutral-500">
-            All Budgets
-          </span>
-          <ChevronDown className="w-8 h-8" />
-        </button>
+        <Select
+          value={budget}
+          onChange={(e) => {
+            setBudget(e.target.value);
+            setPage(0);
+          }}
+          options={BUDGET_OPTIONS}
+          placeholder="All Budgets"
+          className="!h-12 !py-2 w-auto"
+        />
 
         <button className="border border-neutral-500 rounded-md h-12 px-6 py-4 flex items-center">
           <span className="text-lg font-light text-secondary-500">Export</span>
@@ -120,20 +126,34 @@ export function PendingRequestsTab() {
         </Button>
       </div>
 
-      <div className="flex flex-col gap-6">
-        {jobs.length > 0 ? (
-          jobs.map((job) => (
+      {isLoading ? (
+        <LoadingSpinner message="Loading pending jobs..." className="py-12" />
+      ) : error ? (
+        <ErrorState title="Failed to load pending jobs" className="py-12" />
+      ) : jobs.length === 0 ? (
+        <EmptyState message="No pending jobs found" className="py-12" />
+      ) : (
+        <div className="flex flex-col gap-6">
+          {jobs.map((job) => (
             <PendingJobCard
               key={job.id}
               job={job}
               isSelected={selectedIds.includes(job.id)}
               onToggleSelect={() => toggleSelect(job.id)}
             />
-          ))
-        ) : (
-          <p className="text-neutral-500 text-lg">No pending jobs found</p>
-        )}
-      </div>
+          ))}
+          {data && data.totalPages > 1 && (
+            <Pagination
+              currentPage={page + 1}
+              totalPages={data.totalPages}
+              totalItems={data.totalElements}
+              shownItems={data.numberOfElements}
+              itemLabel="jobs"
+              onPageChange={(p) => setPage(p - 1)}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -147,6 +167,7 @@ function PendingJobCard({
   isSelected: boolean;
   onToggleSelect: () => void;
 }) {
+  const router = useRouter();
   const [showResults, setShowResults] = useState(false);
   const startShortlisting = useStartAIShortlisting();
   const { data: status } = useAIShortlistingStatus(job.id, true, 3000);
@@ -157,9 +178,9 @@ function PendingJobCard({
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency.toLowerCase()) {
-      case "high":
+      case "urgent":
         return "text-error-500";
-      case "normal":
+      case "high":
         return "text-warning-500";
       default:
         return "text-success-500";
@@ -195,6 +216,16 @@ function PendingJobCard({
             <span className="text-sm font-normal text-error-800">Failed</span>
           </div>
         );
+      case "no_matches":
+        return (
+          <div className="bg-neutral-200 px-2 py-2 rounded-[15px] h-8 flex items-center justify-center">
+            <span className="text-sm font-normal text-neutral-600">
+              No matches found
+            </span>
+          </div>
+        );
+      case "not_started":
+        return null;
       default:
         return (
           <div className="bg-success-50 px-2 py-2 rounded-[15px] h-8 flex items-center justify-center">
@@ -280,7 +311,10 @@ function PendingJobCard({
         </p>
 
         <div className="flex gap-4 items-center self-end">
-          <Button className="bg-primary-500 text-white px-7 py-3 rounded-md h-12">
+          <Button
+            className="bg-primary-500 text-white px-7 py-3 rounded-md h-12"
+            onClick={() => router.push(`/dashboard/jobs/${job.id}`)}
+          >
             <span className="text-lg font-medium">View Details</span>
           </Button>
           {status?.status === "completed" ? (

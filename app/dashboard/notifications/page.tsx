@@ -15,6 +15,7 @@ import {
   useMatchingProfessionals,
   useSendJobInvites,
   useSystemAlerts,
+  useNotifyUserForAlert,
 } from "@/hooks/use-communication";
 import {useQueryClient} from "@tanstack/react-query";
 import api from "@/lib/api/axios-config";
@@ -45,7 +46,7 @@ function EmptyBox({ message }: { message: string }) {
 function StatCards() {
   const { data, isLoading } = useCommunicationDashboard();
   return (
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           { label: "Messages Sent Today",   value: isLoading ? "..." : data?.messagesSentToday ?? 0 },
           { label: "Pending System Alerts", value: isLoading ? "..." : data?.pendingSystemAlerts ?? 0 },
@@ -299,9 +300,9 @@ function JobInvitesTab() {
   };
 
   return (
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
 
-        <div className="w-[45%] shrink-0">
+        <div className="w-full lg:w-[45%] shrink-0">
           <p className="text-sm font-semibold text-secondary-600 mb-4">Step 1: Select Job Posting</p>
           {isLoadingJobs ? (
               <LoadingSpinner className="py-8" />
@@ -409,7 +410,7 @@ function JobInvitesTab() {
                             <p className="text-xs text-gray-400 mt-0.5">
                               {prof.profession} • {prof.experienceYears} yrs exp
                             </p>
-                            <div className="flex items-center gap-4 mt-1.5 text-xs text-secondary-500">
+                            <div className="flex items-center gap-4 flex-wrap mt-1.5 text-xs text-secondary-500">
                         <span className="flex items-center gap-1">
                           Rating: {prof.rating?.toFixed(1)}
                           <StarRating rating={prof.rating} size={11} />
@@ -423,7 +424,7 @@ function JobInvitesTab() {
                   })}
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-3 border-t border-gray-200 bg-white">
+                <div className="flex items-center gap-3 flex-wrap px-4 py-3 border-t border-gray-200 bg-white">
               <span className="text-xs text-gray-400 flex-1">
                 {selectedProfIds.length} professional{selectedProfIds.length !== 1 ? "s" : ""} selected
               </span>
@@ -623,6 +624,9 @@ function SystemAlertsTab() {
   const [typeFilter, setTypeFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [previewAlert, setPreviewAlert] = useState<any | null>(null);
+  const [notifyingAlertId, setNotifyingAlertId] = useState<number | null>(null);
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [notifyPriority, setNotifyPriority] = useState("HIGH");
   const queryClient = useQueryClient();
 
   const { data: alerts, isLoading } = useSystemAlerts({
@@ -630,11 +634,27 @@ function SystemAlertsTab() {
     priority: priorityFilter || undefined,
   });
 
+  const notifyMutation = useNotifyUserForAlert();
+
+  const openNotifyForm = (alertId: number) => {
+    setNotifyingAlertId(alertId);
+    setNotifyMessage("");
+    setNotifyPriority("HIGH");
+  };
+
+  const handleSendNotify = (alertId: number) => {
+    if (!notifyMessage.trim()) return;
+    notifyMutation.mutate(
+        { alertId, message: notifyMessage.trim(), priority: notifyPriority },
+        { onSuccess: () => setNotifyingAlertId(null) }
+    );
+  };
+
   const handleApprove = async (questionId: number) => {
     try {
       await api.post(`/admin/quizzes/questions/${questionId}/approve`);
       toast.success("Question approved");
-      queryClient.invalidateQueries({ queryKey: ["system-alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["communication", "system-alerts"] });
     } catch {
       toast.error("Failed to approve question");
     }
@@ -644,7 +664,7 @@ function SystemAlertsTab() {
     try {
       await api.post(`/admin/quizzes/questions/${questionId}/reject`);
       toast.success("Question rejected");
-      queryClient.invalidateQueries({ queryKey: ["system-alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["communication", "system-alerts"] });
     } catch {
       toast.error("Failed to reject question");
     }
@@ -663,14 +683,14 @@ function SystemAlertsTab() {
             />
         )}
 
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
           <div>
             <h2 className="text-sm font-semibold text-secondary-600">Automated System Alerts</h2>
             <p className="text-xs text-gray-400 mt-0.5">
               These alerts are automatically generated and sent to relevant users
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
@@ -679,9 +699,9 @@ function SystemAlertsTab() {
               <option value="">All Alert types</option>
               <option value="QUIZ_SUBMISSION">Quiz Submission</option>
               <option value="Payment">Payment</option>
-              <option value="Subscription">Subscription</option>
-              <option value="Job">Job</option>
-              <option value="Report">Report</option>
+              <option value="Security">Security</option>
+              <option value="Support">Support</option>
+              <option value="System">System</option>
             </select>
             <select
                 value={priorityFilter}
@@ -689,6 +709,7 @@ function SystemAlertsTab() {
                 className="border border-gray-200 rounded-md px-3 py-2 text-sm text-secondary-500 bg-white"
             >
               <option value="">All Priority</option>
+              <option value="CRITICAL">Critical</option>
               <option value="HIGH">High</option>
               <option value="MEDIUM">Medium</option>
               <option value="LOW">Low</option>
@@ -707,7 +728,7 @@ function SystemAlertsTab() {
         ) : (
             <div className="flex flex-col gap-4">
               {alerts.map((alert: any) => {
-                const isUrgent = alert.type === "Payment" || alert.priority === "HIGH";
+                const isUrgent = alert.type === "Payment" || alert.priority === "HIGH" || alert.priority === "CRITICAL";
                 const isQuizSubmission = alert.type === "QUIZ_SUBMISSION";
                 const isActioned = !!alert.actionStatus;
 
@@ -747,7 +768,7 @@ function SystemAlertsTab() {
                           </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          {isActioned && (
+                          {isActioned && alert.actionStatus !== "NOTIFIED" && (
                               <span className={cn(
                                   "text-xs px-2 py-0.5 rounded-full font-medium",
                                   alert.actionStatus === "APPROVED"
@@ -759,7 +780,8 @@ function SystemAlertsTab() {
                           )}
                           <span className={cn(
                               "text-xs px-2 py-0.5 rounded-full",
-                              alert.priority === "HIGH" ? "bg-red-50 text-red-500" :
+                              alert.priority === "CRITICAL" ? "bg-red-100 text-red-700 font-semibold" :
+                                  alert.priority === "HIGH" ? "bg-red-50 text-red-500" :
                                   alert.priority === "MEDIUM" ? "bg-yellow-50 text-yellow-600" :
                                       "bg-gray-100 text-gray-500"
                           )}>
@@ -778,21 +800,21 @@ function SystemAlertsTab() {
                           View
                         </button>
 
-                        {/* Non-quiz non-payment action button */}
-                        {!isQuizSubmission
-                            && alert.type !== "Payment"
-                            && alert.type !== "Subscription"}
+                        {/* Crucial alerts (e.g. a payment dispute) that have a
+                            resolvable affected user get a real take-action button */}
+                        {alert.canNotifyUser && alert.actionStatus !== "NOTIFIED" && notifyingAlertId !== alert.id && (
+                            <button
+                                onClick={() => openNotifyForm(alert.id)}
+                                className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-md transition-colors"
+                            >
+                              Notify affected user
+                            </button>
+                        )}
 
-
-                        {(alert.type === "Payment" || alert.type === "Subscription") && (
-                            <>
-                              <button className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-md transition-colors">
-                                Contact company
-                              </button>
-                              <button className="px-4 py-2 border border-gray-200 text-secondary-500 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors">
-                                View Account
-                              </button>
-                            </>
+                        {alert.actionStatus === "NOTIFIED" && (
+                            <span className="text-xs px-3 py-2 rounded-full font-medium bg-green-50 text-green-600">
+                              ✓ User notified
+                            </span>
                         )}
 
                         {/* Quiz approve/reject — only when not actioned */}
@@ -813,6 +835,45 @@ function SystemAlertsTab() {
                             </>
                         )}
                       </div>
+
+                      {notifyingAlertId === alert.id && (
+                          <div className="mt-4 pt-4 border-t border-gray-200 flex flex-col gap-3">
+                            <label className="text-xs font-medium text-secondary-500">
+                              Message to send the affected user
+                            </label>
+                            <textarea
+                                value={notifyMessage}
+                                onChange={(e) => setNotifyMessage(e.target.value)}
+                                rows={3}
+                                placeholder="Explain what the user needs to know or do..."
+                                className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors resize-none"
+                            />
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <select
+                                  value={notifyPriority}
+                                  onChange={(e) => setNotifyPriority(e.target.value)}
+                                  className="border border-gray-200 rounded-md px-3 py-2 text-sm text-secondary-500 bg-white"
+                              >
+                                <option value="CRITICAL">Critical</option>
+                                <option value="HIGH">High</option>
+                                <option value="MEDIUM">Medium</option>
+                              </select>
+                              <button
+                                  onClick={() => handleSendNotify(alert.id)}
+                                  disabled={!notifyMessage.trim() || notifyMutation.isPending}
+                                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-white text-sm font-medium rounded-md transition-colors"
+                              >
+                                {notifyMutation.isPending ? "Sending..." : "Send notification"}
+                              </button>
+                              <button
+                                  onClick={() => setNotifyingAlertId(null)}
+                                  className="px-4 py-2 border border-gray-200 text-secondary-500 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                      )}
                     </div>
                 );
               })}

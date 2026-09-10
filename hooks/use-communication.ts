@@ -10,6 +10,7 @@ import {
   getMatchingProfessionals,
   sendJobInvites,
   getSystemAlerts,
+  notifyUserForAlert,
 } from "@/lib/api/services/communication";
 
 export function useCommunicationDashboard() {
@@ -116,5 +117,25 @@ export function useSystemAlerts(
     queryKey: ["communication", "system-alerts", params],
     queryFn: () => getSystemAlerts(params),
     enabled,
+  });
+}
+
+export function useNotifyUserForAlert() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      alertId,
+      message,
+      priority,
+    }: {
+      alertId: number;
+      message: string;
+      priority: string;
+    }) => notifyUserForAlert(alertId, message, priority),
+    onSuccess: () => {
+      toast.success("Notification sent to user");
+      queryClient.invalidateQueries({ queryKey: ["communication", "system-alerts"] });
+    },
+    onError: () => toast.error("Failed to send notification"),
   });
 }

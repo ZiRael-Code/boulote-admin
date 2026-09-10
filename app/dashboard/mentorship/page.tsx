@@ -111,10 +111,9 @@ function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void 
   );
 }
 
-function EligibleProfessionalsTab({ onAssignDirect }: { onAssignDirect: (id: number) => void }) {
+function EligibleProfessionalsTab() {
   const [search, setSearch] = useState("");
   const [industry, setIndustry] = useState("");
-  const assignMutation = useAssignMentor();
   const router = useRouter();
 
   const { data: mentors, isLoading } = useEligibleMentors({ search, industry });
@@ -188,6 +187,74 @@ function EligibleProfessionalsTab({ onAssignDirect }: { onAssignDirect: (id: num
   );
 }
 
+function ReassignMentorPicker({
+  applicationId,
+  selectedNewMentorId,
+  onSelect,
+  onCancel,
+  onConfirm,
+  isPending,
+}: {
+  applicationId: number;
+  selectedNewMentorId: number | null;
+  onSelect: (id: number) => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+  isPending: boolean;
+}) {
+  // Sourced from the application specific eligible mentors endpoint, not the
+  // generic mentor list, so every mentor shown here has already been checked
+  // against this mentee's desired skills, the same check the backend enforces
+  // on reassignment. Using the generic list let admins pick a mentor here that
+  // the backend would then reject.
+  const { data: eligibleMentors, isLoading } = useEligibleMentorsForApplication(applicationId, true);
+
+  return (
+      <div className="border border-gray-200 rounded-md p-4 mb-4 flex flex-col gap-3">
+        <p className="text-sm font-medium text-secondary-600">Select new mentor:</p>
+        {isLoading ? (
+            <LoadingSpinner className="py-4" />
+        ) : !eligibleMentors?.length ? (
+            <p className="text-sm text-gray-400">No eligible mentors found for this mentee.</p>
+        ) : (
+            <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+              {eligibleMentors.map((m: any) => (
+                  <div
+                      key={m.id}
+                      onClick={() => onSelect(m.id)}
+                      className={cn(
+                          "flex items-center gap-3 p-3 border rounded-md cursor-pointer",
+                          selectedNewMentorId === m.id ? "border-primary-500 bg-primary-50" : "border-gray-200"
+                      )}
+                  >
+                    <input type="radio" checked={selectedNewMentorId === m.id} readOnly className="w-4 h-4" />
+                    <div>
+                      <p className="text-sm font-medium text-secondary-600">{m.name} • {m.role}</p>
+                      <p className="text-xs text-gray-400">Rating: {m.rating?.toFixed(1)} • {m.currentMentees} mentees</p>
+                    </div>
+                  </div>
+              ))}
+            </div>
+        )}
+        <div className="flex gap-2">
+          <button
+              disabled={!selectedNewMentorId || isPending}
+              onClick={onConfirm}
+              className="px-4 py-2 bg-primary-500 text-white text-sm rounded-md disabled:opacity-50"
+          >
+            {isPending ? "Reassigning..." : "Confirm Reassign"}
+          </button>
+          <button
+              onClick={onCancel}
+              className="px-4 py-2 border border-gray-200 text-secondary-500 text-sm rounded-md"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+  );
+}
+
 function ActivePairsTab() {
   const [search, setSearch] = useState("");
   const [industry, setIndustry] = useState("");
@@ -195,7 +262,6 @@ function ActivePairsTab() {
   const [selectedNewMentorId, setSelectedNewMentorId] = useState<number | null>(null);
 
   const { data: pairs, isLoading } = useActivePairs({ search, industry });
-  const { data: eligibleMentors } = useEligibleMentors({});
   const endMutation = useEndMentorship();
   const reassignMutation = useReassignMentor();
   const router = useRouter();
@@ -259,45 +325,17 @@ function ActivePairsTab() {
                     </div>
 
                     {reassigningId === pair.id ? (
-                        <div className="border border-gray-200 rounded-md p-4 mb-4 flex flex-col gap-3">
-                          <p className="text-sm font-medium text-secondary-600">Select new mentor:</p>
-                          <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
-                            {(eligibleMentors ?? []).map((m: any) => (
-                                <div
-                                    key={m.id}
-                                    onClick={() => setSelectedNewMentorId(m.id)}
-                                    className={cn(
-                                        "flex items-center gap-3 p-3 border rounded-md cursor-pointer",
-                                        selectedNewMentorId === m.id ? "border-primary-500 bg-primary-50" : "border-gray-200"
-                                    )}
-                                >
-                                  <input type="radio" checked={selectedNewMentorId === m.id} readOnly className="w-4 h-4" />
-                                  <div>
-                                    <p className="text-sm font-medium text-secondary-600">{m.name} • {m.role}</p>
-                                    <p className="text-xs text-gray-400">Rating: {m.rating?.toFixed(1)} • {m.currentMentees} mentees</p>
-                                  </div>
-                                </div>
-                            ))}
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                                disabled={!selectedNewMentorId || reassignMutation.isPending}
-                                onClick={() => reassignMutation.mutate(
-                                    { applicationId: pair.id, newMentorId: selectedNewMentorId! },
-                                    { onSuccess: () => { setReassigningId(null); setSelectedNewMentorId(null); } }
-                                )}
-                                className="px-4 py-2 bg-primary-500 text-white text-sm rounded-md disabled:opacity-50"
-                            >
-                              {reassignMutation.isPending ? "Reassigning..." : "Confirm Reassign"}
-                            </button>
-                            <button
-                                onClick={() => { setReassigningId(null); setSelectedNewMentorId(null); }}
-                                className="px-4 py-2 border border-gray-200 text-secondary-500 text-sm rounded-md"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
+                        <ReassignMentorPicker
+                            applicationId={pair.id}
+                            selectedNewMentorId={selectedNewMentorId}
+                            onSelect={setSelectedNewMentorId}
+                            onCancel={() => { setReassigningId(null); setSelectedNewMentorId(null); }}
+                            onConfirm={() => reassignMutation.mutate(
+                                { applicationId: pair.id, newMentorId: selectedNewMentorId! },
+                                { onSuccess: () => { setReassigningId(null); setSelectedNewMentorId(null); } }
+                            )}
+                            isPending={reassignMutation.isPending}
+                        />
                     ) : null}
 
                     <div className="flex gap-3">
@@ -471,7 +509,7 @@ function FindMentorView({
                   {[
                     `Industry: ${requirements.industry}`,
                     `Focus: ${requirements.focus}`,
-                    `Experience level: ${requirements.experienceLevel} year(s)`,
+                    `Experience level: ${requirements.experienceLevel}`,
                   ].map((r) => (
                       <div key={r} className="flex items-center gap-2 text-sm text-secondary-500">
                         <span className="text-primary-500">✓</span> {r}
@@ -638,7 +676,7 @@ export default function AdminMentorshipPage() {
         <StatCards />
         <TabBar active={activeTab} onChange={setActiveTab} />
 
-        {activeTab === "eligible" && <EligibleProfessionalsTab onAssignDirect={(id) => console.log(id)} />}
+        {activeTab === "eligible" && <EligibleProfessionalsTab />}
         {activeTab === "pairs"    && <ActivePairsTab />}
         {activeTab === "requests" && <RequestsTab onFindMentor={handleFindMentor} />}
       </div>

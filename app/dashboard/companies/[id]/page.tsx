@@ -52,8 +52,8 @@ export default function CompanyProfilePage() {
         </h1>
       </div>
 
-      <div className="flex items-start justify-between">
-        <div className="flex gap-6">
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div className="flex gap-6 flex-wrap">
           <Avatar initials={initials} size="xl" />
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl font-semibold text-secondary-500">
@@ -125,7 +125,7 @@ function OverviewTab({ profile }: { profile: CompanyProfile }) {
           <h3 className="text-lg font-semibold text-secondary-500 mb-4">
             Company Information
           </h3>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-sm text-neutral-500 mb-1">Email</p>
               <p className="text-base font-medium text-secondary-500">

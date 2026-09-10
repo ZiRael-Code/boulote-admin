@@ -4,6 +4,7 @@ import type {
   CompaniesResponse,
   PendingCompaniesResponse,
   CompanyProfile,
+  CompanyFilterOptions,
 } from "@/lib/types/company";
 
 export async function getCompaniesDashboard(): Promise<CompaniesDashboardResponse> {
@@ -15,9 +16,26 @@ export async function getCompaniesDashboard(): Promise<CompaniesDashboardRespons
 
 
 
-export async function getCompanies(): Promise<CompaniesResponse> {
+export type CompanyFilters = {
+  search?: string;
+  industry?: string;
+  size?: string;
+  plan?: string;
+  status?: string;
+  page?: number;
+};
+
+export async function getCompanies(filters: CompanyFilters = {}): Promise<CompaniesResponse> {
   const response = await axiosInstance.get<CompaniesResponse>(
-    "/admin/company/getCompanies"
+    "/admin/company/getCompanies",
+    { params: { ...filters, sizeParam: 10 } }
+  );
+  return response.data;
+}
+
+export async function getCompanyFilterOptions(): Promise<CompanyFilterOptions> {
+  const response = await axiosInstance.get<CompanyFilterOptions>(
+    "/admin/company/filter-options"
   );
   return response.data;
 }

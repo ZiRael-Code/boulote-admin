@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/button";
 import { useQuiz } from "@/hooks/use-quizzes";
 import { formatRelativeTime } from "@/lib/utils/format-date";
-import type { QuizAttempt } from "@/lib/types/quiz";
+import type { QuizAttempt, QuizDetails } from "@/lib/types/quiz";
 
 export default function QuizAnalyticsPage() {
   const params = useParams();
@@ -29,8 +29,6 @@ export default function QuizAnalyticsPage() {
       </div>
     );
   }
-
-  const analytics = quiz.analytics;
 
   return (
     <div className="flex flex-col gap-6 px-4 py-8 lg:pl-16 lg:pr-8 lg:py-16">
@@ -56,9 +54,9 @@ export default function QuizAnalyticsPage() {
           </h2>
           <button className="text-primary-500 text-sm font-medium">View All</button>
         </div>
-        {analytics && analytics.totalAttempts > 0 ? (
-          <div className="bg-white border border-border-500 rounded-md overflow-hidden">
-            <table className="w-full">
+        {quiz.performanceByQuestion && quiz.performanceByQuestion.length > 0 ? (
+          <div className="bg-white border border-border-500 rounded-md overflow-x-auto">
+            <table className="w-full min-w-[600px]">
               <thead className="bg-neutral-50">
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-secondary-500">
@@ -76,11 +74,20 @@ export default function QuizAnalyticsPage() {
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-t border-border-500">
-                  <td className="px-6 py-4 text-base text-neutral-500 text-center" colSpan={4}>
-                    Question performance data will be displayed here when available
-                  </td>
-                </tr>
+                {quiz.performanceByQuestion.map((row: NonNullable<QuizDetails["performanceByQuestion"]>[number]) => (
+                  <tr key={row.questionId} className="border-t border-border-500">
+                    <td className="px-6 py-4 text-base text-secondary-500 max-w-md truncate">
+                      {row.questionText}
+                    </td>
+                    <td className="px-6 py-4 text-base text-neutral-500">
+                      {row.correctPercentage.toFixed(1)}%
+                    </td>
+                    <td className="px-6 py-4 text-base text-neutral-500">
+                      {row.avgTimeSeconds.toFixed(0)}s
+                    </td>
+                    <td className="px-6 py-4 text-base text-neutral-500">{row.difficulty}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

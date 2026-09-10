@@ -1,10 +1,14 @@
 "use client";
 
-import { Search, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/button";
+import SearchInput from "@/components/ui/input/search-input";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { Pagination } from "@/components/ui/pagination";
 import { Avatar } from "@/components/ui/avatar";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { useOngoingJobs } from "@/hooks/use-jobs";
@@ -14,19 +18,9 @@ import { getInitials } from "@/lib/utils/string-helpers";
 import { pluralize } from "@/lib/utils/string-helpers";
 
 export function OngoingJobsTab() {
-  const { data, isLoading, error } = useOngoingJobs(true);
-
-  if (isLoading) {
-    return <LoadingSpinner message="Loading ongoing jobs..." className="py-12" />;
-  }
-
-  if (error) {
-    return <ErrorState title="Failed to load ongoing jobs" className="py-12" />;
-  }
-
-  if (!data || data.empty) {
-    return <EmptyState message="No ongoing jobs found" className="py-12" />;
-  }
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const { data, isLoading, error } = useOngoingJobs(true, { search, page });
 
   return (
     <div className="flex flex-col gap-8">
@@ -45,33 +39,45 @@ export function OngoingJobsTab() {
           <ChevronDown className="w-8 h-8" />
         </button>
 
-        <div className="border border-neutral-500 rounded-md h-12 px-6 py-4 flex items-center justify-between flex-1 max-w-md">
-          <span className="text-lg font-light text-secondary-500">Search</span>
-          <Search className="w-6 h-6" />
-        </div>
-
-        <Button
-          variant="outline"
-          className="border border-neutral-500 text-border-neutral-800 px-7 py-3"
-        >
-          Progress report
-        </Button>
+        <SearchInput
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
+          className="flex-1 max-w-md"
+        />
       </div>
 
-      <div className="flex flex-col gap-6">
-        {data.content && data.content.length > 0 ? (
-          data.content.map((job) => (
+      {isLoading ? (
+        <LoadingSpinner message="Loading ongoing jobs..." className="py-12" />
+      ) : error ? (
+        <ErrorState title="Failed to load ongoing jobs" className="py-12" />
+      ) : !data?.content?.length ? (
+        <EmptyState message="No ongoing jobs found" className="py-12" />
+      ) : (
+        <div className="flex flex-col gap-6">
+          {data.content.map((job) => (
             <OngoingJobCard key={job.id} job={job} />
-          ))
-        ) : (
-          <p className="text-neutral-500 text-lg">No ongoing jobs found</p>
-        )}
-      </div>
+          ))}
+          {data.totalPages > 1 && (
+            <Pagination
+              currentPage={page + 1}
+              totalPages={data.totalPages}
+              totalItems={data.totalElements}
+              shownItems={data.numberOfElements}
+              itemLabel="jobs"
+              onPageChange={(p) => setPage(p - 1)}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 function OngoingJobCard({ job }: { job: Job }) {
+  const router = useRouter();
   const isAtRisk = job.progressPercentage < 50 && job.dueDate;
   const dueDate = job.dueDate ? new Date(job.dueDate) : null;
   const now = new Date();
@@ -130,16 +136,14 @@ function OngoingJobCard({ job }: { job: Job }) {
           <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
             {isAtRisk && daysUntilDue !== null
               ? `In ${daysUntilDue} ${pluralize(daysUntilDue, "day")}`
-              : job.actualBudget
-                ? `${job.actualBudget} / ${job.budget}`
-                : job.budget}
+              : job.budget}
           </p>
         </div>
         {isAtRisk && (
           <div className="flex flex-col gap-2">
             <p className="text-xs font-normal text-neutral-500">ISSUE</p>
             <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
-              Client Feedback delay
+              Behind schedule
             </p>
           </div>
         )}
@@ -166,19 +170,10 @@ function OngoingJobCard({ job }: { job: Job }) {
 
       <div className="flex gap-4 self-end">
         <Button
-          variant="outline"
-          className="border border-neutral-500 text-border-neutral-800 px-7 py-3"
+          className="bg-primary-500 text-white px-7 py-3"
+          onClick={() => router.push(`/dashboard/jobs/${job.id}`)}
         >
-          {isAtRisk ? "View issues" : "Track Progress"}
-        </Button>
-        <Button
-          variant="outline"
-          className="border border-neutral-500 text-border-neutral-800 px-7 py-3"
-        >
-          {isAtRisk ? "Contact parties" : "View messages"}
-        </Button>
-        <Button className="bg-primary-500 text-white px-7 py-3">
-          {isAtRisk ? "Escalate issue" : "Manage Jobs"}
+          {isAtRisk ? "View issues" : "Manage Job"}
         </Button>
       </div>
     </div>

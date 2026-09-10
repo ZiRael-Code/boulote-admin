@@ -14,6 +14,7 @@ import type {
   PendingApprovalsResponse,
   ProfessionalProfile,
   ProfessionalReview,
+  QuizSessionDetail,
 } from "@/lib/types/professional";
 
 export function useProfessionalsDashboard(enabled = true) {
@@ -99,12 +100,24 @@ export function useAssignAsMentor() {
   });
 }
 
-import { getProfessionalReviews } from "@/lib/api/services/professionals";
+import { getProfessionalReviews, getQuizSessionDetail } from "@/lib/api/services/professionals";
 
 export function useProfessionalReviews(id: number, enabled = true) {
   return useQuery<ProfessionalReview[], Error, ProfessionalReview[]>({
     queryKey: ["professionals", "reviews", id],
     queryFn: () => getProfessionalReviews(id),
     enabled: enabled && !!id,
+  });
+}
+
+export function useQuizSessionDetail(
+  professionalId: number,
+  sessionId: number | null,
+  enabled = true,
+) {
+  return useQuery<QuizSessionDetail, Error, QuizSessionDetail>({
+    queryKey: ["professionals", "quiz-session", professionalId, sessionId],
+    queryFn: () => getQuizSessionDetail(professionalId, sessionId as number),
+    enabled: enabled && !!professionalId && !!sessionId,
   });
 }

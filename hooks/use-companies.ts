@@ -3,16 +3,19 @@ import { useMutationWithToast } from "./use-mutation-with-toast";
 import {
   getCompaniesDashboard,
   getCompanies,
+  getCompanyFilterOptions,
   getPendingCompanyApprovals,
   getCompanyProfile,
   approveCompany,
   rejectCompany,
+  type CompanyFilters,
 } from "@/lib/api/services/companies";
 import type {
   CompaniesDashboardResponse,
   CompaniesResponse,
   PendingCompaniesResponse,
   CompanyProfile,
+  CompanyFilterOptions,
 } from "@/lib/types/company";
 
 export function useCompaniesDashboard(enabled = true) {
@@ -25,11 +28,20 @@ export function useCompaniesDashboard(enabled = true) {
 
 
 
-export function useCompanies(enabled = true) {
+export function useCompanies(enabled = true, filters: CompanyFilters = {}) {
   return useQuery<CompaniesResponse>({
-    queryKey: ["companies", "list"],
-    queryFn: getCompanies,
+    queryKey: ["companies", "list", filters],
+    queryFn: () => getCompanies(filters),
     enabled,
+  });
+}
+
+export function useCompanyFilterOptions(enabled = true) {
+  return useQuery<CompanyFilterOptions>({
+    queryKey: ["companies", "filter-options"],
+    queryFn: getCompanyFilterOptions,
+    enabled,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

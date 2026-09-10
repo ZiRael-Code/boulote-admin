@@ -22,6 +22,10 @@ type ProfessionalCardProps = {
   matchScore?: MatchScoreData;
   isSelected?: boolean;
   onSelect?: () => void;
+  /** When set, renders the selector as a radio button scoped to this group
+   * name instead of a checkbox — use when only one professional can be
+   * picked per job. */
+  selectionGroupName?: string;
 };
 
 export function ProfessionalCard({
@@ -29,6 +33,7 @@ export function ProfessionalCard({
   matchScore,
   isSelected,
   onSelect,
+  selectionGroupName,
 }: ProfessionalCardProps) {
   return (
     <div
@@ -113,11 +118,14 @@ export function ProfessionalCard({
       </div>
 
       <input
-        type="checkbox"
+        type={selectionGroupName ? "radio" : "checkbox"}
+        name={selectionGroupName}
         checked={isSelected || false}
         onChange={onSelect}
         onClick={(e) => e.stopPropagation()}
-        className="w-6 h-6 shrink-0 text-primary-500 border-neutral-300 rounded focus:ring-primary-500"
+        className={`w-6 h-6 shrink-0 text-primary-500 border-neutral-300 focus:ring-primary-500 ${
+          selectionGroupName ? "" : "rounded"
+        }`}
       />
     </div>
   );

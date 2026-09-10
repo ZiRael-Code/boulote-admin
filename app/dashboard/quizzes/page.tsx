@@ -213,22 +213,68 @@ export default function QuizzesPage() {
               )}
             </div>
         ) : (
-            <JsonQuestionsTab />
+            <JsonQuestionsTab professions={professions} />
         )}
       </div>
   );
 }
 
-function JsonQuestionsTab() {
+function JsonQuestionsTab({ professions }: { professions?: any[] }) {
     const { data: groupedQuestions, isLoading } = useJsonQuestions(true);
     const updateMutation = useUpdateJsonQuestion();
+    const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
     const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [editData, setEditData] = useState<any>(null);
     const [skillPages, setSkillPages] = useState<Record<string, number>>({});
+    const [categoryFilter, setCategoryFilter] = useState("");
     const PAGE_SIZE = 5;
 
+    const UNCATEGORIZED = "Uncategorized";
+
     const skills = Object.keys(groupedQuestions ?? {}).sort();
+
+    // Skills are grouped by profession (each profession's hardcoded/seeded
+    // skill list acts as the category), skills not found under any profession
+    // fall into an "Uncategorized" bucket instead of being dropped.
+    const skillToCategory = useMemo(() => {
+        const map: Record<string, string> = {};
+        (professions ?? []).forEach((profession: any) => {
+            (profession.professionSkills ?? []).forEach((profSkill: any) => {
+                if (profSkill?.name) {
+                    map[profSkill.name.toLowerCase()] = profession.name;
+                }
+            });
+        });
+        return map;
+    }, [professions]);
+
+    const categorized = useMemo(() => {
+        const byCategory: Record<string, string[]> = {};
+        skills.forEach((skill) => {
+            const category = skillToCategory[skill.toLowerCase()] ?? UNCATEGORIZED;
+            if (!byCategory[category]) byCategory[category] = [];
+            byCategory[category].push(skill);
+        });
+        return byCategory;
+    }, [skills, skillToCategory]);
+
+    const categories = Object.keys(categorized).sort((a, b) => {
+        if (a === UNCATEGORIZED) return 1;
+        if (b === UNCATEGORIZED) return -1;
+        return a.localeCompare(b);
+    });
+
+    const visibleCategories = categoryFilter ? categories.filter((c) => c === categoryFilter) : categories;
+
+    const toggleCategory = (category: string) => {
+        setExpandedCategories((prev) => {
+            const next = new Set(prev);
+            if (next.has(category)) next.delete(category);
+            else next.add(category);
+            return next;
+        });
+    };
 
     const getPage = (skill: string) => skillPages[skill] ?? 0;
     const setPage = (skill: string, page: number) =>
@@ -259,8 +305,46 @@ function JsonQuestionsTab() {
                 <span className="text-sm text-neutral-500">{totalQuestions} questions across {skills.length} skills</span>
             </div>
 
+            <div className="relative w-64">
+                <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="w-full border border-neutral-500 rounded-md px-4 py-2 pr-10 appearance-none bg-white text-base text-secondary-500 focus:outline-none"
+                >
+                    <option value="">All categories</option>
+                    {categories.map((category) => (
+                        <option key={category} value={category}>{category}</option>
+                    ))}
+                </select>
+                <ChevronDown className="w-5 h-5 text-neutral-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
             <div className="flex flex-col gap-3">
-                {skills.map((skill) => {
+                {visibleCategories.map((category) => {
+                    const categorySkills = categorized[category];
+                    const categoryQuestionCount = categorySkills.reduce(
+                        (sum, s) => sum + ((groupedQuestions ?? {})[s]?.length ?? 0), 0
+                    );
+                    const isCategoryExpanded = expandedCategories.has(category);
+
+                    return (
+                        <div key={category} className="bg-white border border-border-500 rounded-md overflow-hidden">
+                            <button
+                                onClick={() => toggleCategory(category)}
+                                className="w-full flex items-center justify-between px-6 py-4 hover:bg-neutral-50 transition-colors bg-neutral-50"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <span className="text-base font-bold text-secondary-500">{category}</span>
+                                    <span className="px-2 py-0.5 bg-primary-100 text-primary-600 text-xs rounded-full">
+                                        {categorySkills.length} skills, {categoryQuestionCount} questions
+                                    </span>
+                                </div>
+                                <span className="text-neutral-400 text-sm">{isCategoryExpanded ? "▲ Collapse" : "▼ Expand"}</span>
+                            </button>
+
+                            {isCategoryExpanded && (
+                                <div className="border-t border-border-500 flex flex-col divide-y divide-border-500 pl-4">
+                                    {categorySkills.map((skill) => {
                     const allQuestions: any[] = (groupedQuestions ?? {})[skill] ?? [];
                     const isExpanded = expandedSkill === skill;
                     const page = getPage(skill);
@@ -275,7 +359,7 @@ function JsonQuestionsTab() {
                     };
 
                     return (
-                        <div key={skill} className="bg-white border border-border-500 rounded-md overflow-hidden">
+                        <div key={skill} className="bg-white overflow-hidden">
 
                             <button
                                 onClick={() => setExpandedSkill(isExpanded ? null : skill)}
@@ -437,6 +521,11 @@ function JsonQuestionsTab() {
                                             </div>
                                         </div>
                                     )}
+                                </div>
+                            )}
+                        </div>
+                    );
+                                    })}
                                 </div>
                             )}
                         </div>

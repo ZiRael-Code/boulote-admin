@@ -1,33 +1,30 @@
 import type { PaginatedResponse } from "./api";
 
-export type CompanyStatus = "Active" | "Inactive" | "Pending" | "IN_REVIEW";
+export type CompanyStatus = "Active" | "Approved" | "Pending" | "Rejected" | "Deactivated";
 
-export type CompanySize = "Small" | "Medium" | "Large";
-
-export type CompanyPlan = "Free" | "Premium" | "Enterprise" | "Pay Per Project";
-
-export type CompanyIndustry =
-  | "Technology"
-  | "Renewable energy"
-  | "Artificial Intelligence"
-  | "Finance"
-  | "Healthcare"
-  | "Education"
-  | "Other";
-
+// Industry, size, and plan are admin-configurable catalog values (see
+// CompanyTypeService/CompanySizeService/PaymentPlanRepository on the backend),
+// not a fixed set — fetch real options via getCompanyFilterOptions() rather
+// than hardcoding a union here.
 export type Company = {
   id: number;
   initials: string;
   name: string;
   email: string;
-  industry: CompanyIndustry;
-  size: CompanySize;
-  plan: CompanyPlan;
+  industry: string;
+  size: string;
+  plan: string;
   status: CompanyStatus;
   lastActive: string;
   joinedDate: string;
   employeeCount: number;
   location: string;
+};
+
+export type CompanyFilterOptions = {
+  industries: string[];
+  sizes: string[];
+  plans: string[];
 };
 
 export type CompanyDocument = {
@@ -57,9 +54,9 @@ export type PendingCompanyApproval = {
   initials: string;
   name: string;
   email: string;
-  industry: CompanyIndustry;
-  size: CompanySize;
-  requestedPlan?: CompanyPlan;
+  industry: string;
+  size: string;
+  requestedPlan?: string;
   submittedDate: string;
   waitingDays?: number;
   documents?: string[];
@@ -74,9 +71,9 @@ export type CompanyProfile = {
   email: string;
   phone?: string;
   website?: string;
-  industry: CompanyIndustry;
-  size: CompanySize;
-  plan: CompanyPlan;
+  industry: string;
+  size: string;
+  plan: string;
   status: CompanyStatus;
   description: string;
   employeeCount: number;

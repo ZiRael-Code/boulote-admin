@@ -9,30 +9,22 @@ export type QuizFilters = {
   size?: number;
 };
 
+// Matches AdminQuizResponse.CreateQuizRequest on the backend exactly, only
+// fields the Quiz/QuizQuestion entities can actually persist belong here.
 export type CreateQuizRequest = {
   title: string;
-  difficulty?: string;
+  difficulty?: string; // EASY, MEDIUM, HARD
   adminNotes?: string;
-  estimatedLevel?: number;
   category?: string;
-  tags?: string[];
   questions?: {
     questionText: string;
-    questionType: string;
+    questionType: string; // MULTIPLE_CHOICE, TRUE_FALSE
     options: string[];
     correctAnswer: number | string;
     explanation?: string;
   }[];
   timeLimit?: { enabled: boolean; duration: number };
   passingScore?: number;
-  questionOrder?: string;
-  showResult?: string;
-  attempts?: number;
-  accessControl?: {
-    requireLogin: boolean;
-    verifiedProfessionals: boolean;
-    premiumFeature: boolean;
-  };
 };
 
 export async function getQuizDashboard() {

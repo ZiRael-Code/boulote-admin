@@ -1,55 +1,63 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import {
+  usePlans,
+  useCreatePlan,
+  useUpdatePlan,
+  useGatewayStatuses,
+  useConnectPaystack,
+  useDisconnectPaystack,
+  usePlatformSettings,
+  useUpdatePlatformSettings,
+} from "@/hooks/use-admin-settings";
+import type { SubscriptionPlan, SavePlanRequest } from "@/lib/types/admin-settings";
 
-interface SubscriptionPlan {
-  id: number;
-  name: string;
-  price: string;
-  status: "Active" | "Inactive";
-  monthlyPrice: string;
-  annualPrice: string;
-  features: string;
+type View = "main" | "edit-plan" | "upload-logo" | "connect-paystack";
+
+function formatNaira(value: number) {
+  return `₦${value.toLocaleString()}`;
 }
-
-type Gateway = { name: string; connected: boolean };
-type View = "main" | "edit-plan" | "upload-logo";
-
-const initialPlans: SubscriptionPlan[] = [
-  { id: 1, name: "Basic Plan",        price: "$9.99", status: "Active",   monthlyPrice: "9.99",  annualPrice: "99.99",  features: "Unlimited job postings\nUnlimited job postings\nUnlimited job postings\nUnlimited job postings" },
-  { id: 2, name: "Professional plan", price: "$9.99", status: "Active",   monthlyPrice: "9.99",  annualPrice: "99.99",  features: "Unlimited job postings\nUnlimited job postings\nUnlimited job postings\nUnlimited job postings" },
-  { id: 3, name: "Enterprise plan",   price: "$9.99", status: "Inactive", monthlyPrice: "29.99", annualPrice: "299.99", features: "Unlimited job postings\nUnlimited job postings\nUnlimited job postings\nUnlimited job postings" },
-];
-
-const initialGateways: Gateway[] = [
-  { name: "Paystack", connected: true  },
-  { name: "Stripe",   connected: false },
-  { name: "Paypal",   connected: false },
-];
 
 function EditPlanView({
   plan,
   isNew,
   onSave,
   onCancel,
+  isSaving,
 }: {
   plan: SubscriptionPlan;
   isNew: boolean;
-  onSave: (p: SubscriptionPlan) => void;
+  onSave: (p: SavePlanRequest) => void;
   onCancel: () => void;
+  isSaving: boolean;
 }) {
-  const [form, setForm] = useState(plan);
+  const [form, setForm] = useState({
+    name: plan.name,
+    monthlyPrice: String(plan.monthlyPrice),
+    yearlyPrice: String(plan.yearlyPrice),
+    active: plan.active,
+  });
 
-  const set = (field: keyof SubscriptionPlan, value: string | boolean) =>
+  const set = (field: keyof typeof form, value: string | boolean) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleSave = () => {
+    onSave({
+      name: form.name,
+      monthlyPrice: Number(form.monthlyPrice) || 0,
+      yearlyPrice: Number(form.yearlyPrice) || 0,
+      active: form.active,
+    });
+  };
 
   return (
     <div>
       <h2 className="text-lg font-semibold text-secondary-600 mb-1 pb-4 border-b border-gray-200">
-        {isNew ? "Add subscription plan" : "Edit suscription plan"}
+        {isNew ? "Add subscription plan" : "Edit subscription plan"}
       </h2>
 
       <div className="space-y-5 mt-6">
@@ -60,68 +68,64 @@ function EditPlanView({
             type="text"
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
-            placeholder="Enter your name"
+            placeholder="Enter plan name"
             className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Monthly price</label>
+          <label className="block text-xs text-gray-400 mb-1.5">Monthly price (Naira)</label>
           <input
-            type="text"
+            type="number"
             value={form.monthlyPrice}
             onChange={(e) => set("monthlyPrice", e.target.value)}
-            placeholder="Enter your name"
+            placeholder="0"
             className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Annual price</label>
+          <label className="block text-xs text-gray-400 mb-1.5">Yearly price (Naira)</label>
           <input
-            type="text"
-            value={form.annualPrice}
-            onChange={(e) => set("annualPrice", e.target.value)}
-            placeholder="Enter your name"
+            type="number"
+            value={form.yearlyPrice}
+            onChange={(e) => set("yearlyPrice", e.target.value)}
+            placeholder="0"
             className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors"
           />
         </div>
 
-        <div>
-          <label className="block text-xs text-gray-400 mb-1.5">Features</label>
-          <textarea
-            value={form.features}
-            onChange={(e) => set("features", e.target.value)}
-            rows={6}
-            className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-500 focus:outline-none focus:border-primary-400 transition-colors resize-none"
-          />
-        </div>
+        <p className="text-xs text-gray-400">
+          Feature toggles for this plan (community access, job application limits, and similar) are not
+          editable from this screen yet.
+        </p>
 
         <div>
           <p className="text-sm font-semibold text-secondary-600 mb-3">Status</p>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => set("status", form.status === "Active" ? "Inactive" : "Active")}
+              onClick={() => set("active", !form.active)}
               className={cn(
                 "relative inline-flex h-7 w-12 items-center rounded-full transition-colors",
-                form.status === "Active" ? "bg-green-500" : "bg-gray-300"
+                form.active ? "bg-green-500" : "bg-gray-300"
               )}
             >
               <span className={cn(
                 "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform",
-                form.status === "Active" ? "translate-x-6" : "translate-x-1"
+                form.active ? "translate-x-6" : "translate-x-1"
               )} />
             </button>
-            <span className="text-sm text-secondary-500">{form.status}</span>
+            <span className="text-sm text-secondary-500">{form.active ? "Active" : "Inactive"}</span>
           </div>
         </div>
 
         <div className="flex gap-3 pt-2">
           <button
-            onClick={() => onSave(form)}
-            className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-md transition-colors"
+            onClick={handleSave}
+            disabled={isSaving || !form.name}
+            className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-white text-sm font-medium rounded-md transition-colors"
           >
-            Save Changes
+            {isSaving ? "Saving..." : "Save Changes"}
           </button>
           <button
             onClick={onCancel}
@@ -136,36 +140,50 @@ function EditPlanView({
 }
 
 function UploadLogoView({
+  currentLogoUrl,
   onApply,
   onCancel,
+  isSaving,
 }: {
-  onApply: (fileName: string) => void;
+  currentLogoUrl: string | null;
+  onApply: (file: File) => void;
   onCancel: () => void;
+  isSaving: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<{ name: string; size: string; dimensions: string } | null>({
-    name: "new-logo.png",
-    size: "256KB",
-    dimensions: "400×120px",
-  });
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
-      setFile({ name: f.name, size: `${Math.round(f.size / 1024)}KB`, dimensions: "400×120px" });
+      setFile(f);
+      setPreviewUrl(URL.createObjectURL(f));
     }
   };
 
   return (
     <div>
       <h2 className="text-lg font-semibold text-secondary-600 mb-1 pb-4 border-b border-gray-200">
-        upload platform logo
+        Upload platform logo
       </h2>
 
       <div className="border border-gray-200 rounded-lg p-6 mt-5 bg-white">
 
         <p className="text-sm font-medium text-secondary-600 mb-3">Current logo</p>
-        <div className="w-44 h-24 bg-gray-300 rounded-md mb-6" />
+        {currentLogoUrl ? (
+          <img src={currentLogoUrl} alt="Current logo" className="w-44 h-24 object-contain bg-gray-50 rounded-md mb-6 border border-gray-200" />
+        ) : (
+          <div className="w-44 h-24 bg-gray-100 rounded-md mb-6 flex items-center justify-center text-xs text-gray-400">
+            No logo set
+          </div>
+        )}
 
         {file && (
           <>
@@ -174,23 +192,23 @@ function UploadLogoView({
               <div className="w-8 h-8 bg-gray-300 rounded shrink-0" />
               <div>
                 <p className="text-sm font-medium text-secondary-600">{file.name}</p>
-                <p className="text-xs text-gray-400">Size: {file.size} | Dimensions: {file.dimensions}</p>
+                <p className="text-xs text-gray-400">Size: {Math.round(file.size / 1024)}KB</p>
               </div>
             </div>
 
-            <div className="w-56 h-24 bg-gray-100 rounded-md flex items-center justify-center mb-6">
-              <p className="text-xs text-gray-400">Preview of logo image</p>
-            </div>
+            {previewUrl && (
+              <img src={previewUrl} alt="New logo preview" className="w-56 h-24 object-contain bg-gray-100 rounded-md mb-6" />
+            )}
           </>
         )}
 
         <div className="flex gap-3">
           <button
-            onClick={() => file && onApply(file.name)}
-            disabled={!file}
+            onClick={() => file && onApply(file)}
+            disabled={!file || isSaving}
             className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-white text-sm font-medium rounded-md transition-colors"
           >
-            Apply Logo
+            {isSaving ? "Uploading..." : "Apply Logo"}
           </button>
           <button
             onClick={() => fileRef.current?.click()}
@@ -211,69 +229,153 @@ function UploadLogoView({
   );
 }
 
+function ConnectPaystackView({
+  onConnect,
+  onCancel,
+  isSaving,
+}: {
+  onConnect: (data: { publicKey: string; secretKey: string; webhookSecret: string; sandboxMode: boolean }) => void;
+  onCancel: () => void;
+  isSaving: boolean;
+}) {
+  const [publicKey, setPublicKey] = useState("");
+  const [secretKey, setSecretKey] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
+  const [sandboxMode, setSandboxMode] = useState(true);
+
+  return (
+    <div>
+      <h2 className="text-lg font-semibold text-secondary-600 mb-1 pb-4 border-b border-gray-200">
+        Connect Paystack
+      </h2>
+
+      <div className="space-y-5 mt-6">
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5">Public key</label>
+          <input
+            type="text"
+            value={publicKey}
+            onChange={(e) => setPublicKey(e.target.value)}
+            placeholder="pk_test_..."
+            className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5">Secret key</label>
+          <input
+            type="password"
+            value={secretKey}
+            onChange={(e) => setSecretKey(e.target.value)}
+            placeholder="sk_test_..."
+            className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5">Webhook secret</label>
+          <input
+            type="password"
+            value={webhookSecret}
+            onChange={(e) => setWebhookSecret(e.target.value)}
+            placeholder="Webhook secret"
+            className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="sandbox-mode"
+            checked={sandboxMode}
+            onChange={(e) => setSandboxMode(e.target.checked)}
+            className="w-4 h-4"
+          />
+          <label htmlFor="sandbox-mode" className="text-sm text-secondary-500">Sandbox mode</label>
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <button
+            onClick={() => onConnect({ publicKey, secretKey, webhookSecret, sandboxMode })}
+            disabled={isSaving || !publicKey || !secretKey}
+            className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-white text-sm font-medium rounded-md transition-colors"
+          >
+            {isSaving ? "Connecting..." : "Connect"}
+          </button>
+          <button
+            onClick={onCancel}
+            className="px-6 py-2.5 border border-gray-200 text-secondary-500 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPlatformSettingsPage() {
   const router = useRouter();
 
-  const [view, setView]               = useState<View>("main");
-  const [plans, setPlans]             = useState(initialPlans);
-  const [gateways, setGateways]       = useState(initialGateways);
+  const [view, setView] = useState<View>("main");
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
-  const [isNewPlan, setIsNewPlan]     = useState(false);
+  const [isNewPlan, setIsNewPlan] = useState(false);
   const [primaryColor, setPrimaryColor] = useState("#383838");
-  const [secondaryColor, setSecondaryColor] = useState("#383838");
-  const [logoName, setLogoName]       = useState<string | null>(null);
-  const [logoUpdated, setLogoUpdated] = useState(false);
-  const [successBanner, setSuccessBanner] = useState(false);
+  const primaryRef = useRef<HTMLInputElement>(null);
 
-  const primaryRef   = useRef<HTMLInputElement>(null);
-  const secondaryRef = useRef<HTMLInputElement>(null);
+  const { data: plans = [], isLoading: plansLoading } = usePlans();
+  const createPlanMutation = useCreatePlan();
+  const updatePlanMutation = useUpdatePlan();
+
+  const { data: gateways = [] } = useGatewayStatuses();
+  const connectPaystackMutation = useConnectPaystack();
+  const disconnectPaystackMutation = useDisconnectPaystack();
+
+  const { data: platformSettings } = usePlatformSettings();
+  const updatePlatformSettingsMutation = useUpdatePlatformSettings();
+
+  useEffect(() => {
+    if (platformSettings?.primaryColor) {
+      setPrimaryColor(platformSettings.primaryColor);
+    }
+  }, [platformSettings?.primaryColor]);
 
   const handleEditPlan = (plan: SubscriptionPlan) => {
-    setEditingPlan({ ...plan });
+    setEditingPlan(plan);
     setIsNewPlan(false);
     setView("edit-plan");
   };
 
   const handleAddPlan = () => {
-    const newPlan: SubscriptionPlan = {
-      id: Date.now(),
-      name: "",
-      price: "$0.00",
-      status: "Active",
-      monthlyPrice: "",
-      annualPrice: "",
-      features: "",
-    };
-    setEditingPlan(newPlan);
+    setEditingPlan({ id: 0, name: "", monthlyPrice: 0, yearlyPrice: 0, active: true });
     setIsNewPlan(true);
     setView("edit-plan");
   };
 
-  const handleSavePlan = (updated: SubscriptionPlan) => {
+  const handleSavePlan = (data: SavePlanRequest) => {
     if (isNewPlan) {
-      setPlans((prev) => [...prev, { ...updated, price: `$${updated.monthlyPrice}` }]);
-    } else {
-      setPlans((prev) =>
-        prev.map((p) => (p.id === updated.id ? { ...updated, price: `$${updated.monthlyPrice}` } : p))
+      createPlanMutation.mutate(data, { onSuccess: () => setView("main") });
+    } else if (editingPlan) {
+      updatePlanMutation.mutate(
+        { id: editingPlan.id, data },
+        { onSuccess: () => setView("main") },
       );
     }
-    setView("main");
-    setSuccessBanner(true);
-    setTimeout(() => setSuccessBanner(false), 5000);
   };
 
-  const handleApplyLogo = (fileName: string) => {
-    setLogoName(fileName);
-    setLogoUpdated(true);
-    setView("main");
-    setSuccessBanner(true);
-    setTimeout(() => setSuccessBanner(false), 5000);
-  };
-
-  const toggleGateway = (name: string) => {
-    setGateways((prev) =>
-      prev.map((g) => (g.name === name ? { ...g, connected: !g.connected } : g))
+  const handleApplyLogo = (file: File) => {
+    updatePlatformSettingsMutation.mutate(
+      { data: {}, logoFile: file },
+      { onSuccess: () => setView("main") },
     );
+  };
+
+  const handleSavePrimaryColor = () => {
+    updatePlatformSettingsMutation.mutate({ data: { primaryColor }, logoFile: null });
+  };
+
+  const handleConnectPaystack = (data: { publicKey: string; secretKey: string; webhookSecret: string; sandboxMode: boolean }) => {
+    connectPaystackMutation.mutate(data, { onSuccess: () => setView("main") });
   };
 
   if (view === "edit-plan" && editingPlan) {
@@ -293,6 +395,7 @@ export default function AdminPlatformSettingsPage() {
           isNew={isNewPlan}
           onSave={handleSavePlan}
           onCancel={() => setView("main")}
+          isSaving={createPlanMutation.isPending || updatePlanMutation.isPending}
         />
       </div>
     );
@@ -310,7 +413,33 @@ export default function AdminPlatformSettingsPage() {
             <p className="text-sm text-gray-400 mt-0.5">Manage your platform configuration and preferences</p>
           </div>
         </div>
-        <UploadLogoView onApply={handleApplyLogo} onCancel={() => setView("main")} />
+        <UploadLogoView
+          currentLogoUrl={platformSettings?.logoUrl ?? null}
+          onApply={handleApplyLogo}
+          onCancel={() => setView("main")}
+          isSaving={updatePlatformSettingsMutation.isPending}
+        />
+      </div>
+    );
+  }
+
+  if (view === "connect-paystack") {
+    return (
+      <div className="px-4 py-8 lg:pl-16 lg:pr-8 lg:py-12 bg-white min-h-screen">
+        <div className="flex items-start gap-3 mb-6 pb-4 border-b border-gray-200">
+          <button onClick={() => setView("main")} className="text-secondary-500 hover:text-primary-500 transition-colors mt-1">
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-secondary-600">Platform Settings</h1>
+            <p className="text-sm text-gray-400 mt-0.5">Manage your platform configuration and preferences</p>
+          </div>
+        </div>
+        <ConnectPaystackView
+          onConnect={handleConnectPaystack}
+          onCancel={() => setView("main")}
+          isSaving={connectPaystackMutation.isPending}
+        />
       </div>
     );
   }
@@ -328,48 +457,45 @@ export default function AdminPlatformSettingsPage() {
         </div>
       </div>
 
-      {successBanner && (
-        <div className="flex items-center justify-between gap-3 border border-green-300 bg-green-50 rounded-lg px-5 py-4 mb-6">
-          <p className="text-sm text-green-700">Settings updated successfully! Your changes have been applied to the platform.</p>
-          <button onClick={() => setSuccessBanner(false)} className="text-green-500 hover:text-green-700 transition-colors shrink-0">
-            <X size={16} />
-          </button>
-        </div>
-      )}
-
       <div className="space-y-10">
 
         <section>
           <h2 className="text-base font-semibold text-secondary-600 mb-4 pb-2 border-b border-gray-200">
-            Suscription Management
+            Subscription Management
           </h2>
 
           <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
 
             <div className="grid grid-cols-4 bg-gray-50 border-b border-gray-200">
-              {["Plan name", "Price", "Status", "Actions"].map((h) => (
+              {["Plan name", "Monthly price", "Status", "Actions"].map((h) => (
                 <div key={h} className="px-6 py-3 text-sm font-medium text-secondary-500">{h}</div>
               ))}
             </div>
 
-            {plans.map((plan, i) => (
-              <div
-                key={plan.id}
-                className={cn("grid grid-cols-4 items-center", i < plans.length - 1 && "border-b border-gray-200")}
-              >
-                <div className="px-6 py-4 text-sm text-secondary-500">{plan.name}</div>
-                <div className="px-6 py-4 text-sm text-secondary-500">{plan.price}</div>
-                <div className="px-6 py-4 text-sm text-secondary-500">{plan.status}</div>
-                <div className="px-6 py-4">
-                  <button
-                    onClick={() => handleEditPlan(plan)}
-                    className="px-4 py-1.5 border border-gray-200 text-sm text-secondary-500 rounded-md hover:bg-gray-50 transition-colors"
-                  >
-                    Edit
-                  </button>
+            {plansLoading ? (
+              <div className="px-6 py-6 text-sm text-gray-400">Loading plans...</div>
+            ) : plans.length === 0 ? (
+              <div className="px-6 py-6 text-sm text-gray-400">No subscription plans yet.</div>
+            ) : (
+              plans.map((plan, i) => (
+                <div
+                  key={plan.id}
+                  className={cn("grid grid-cols-4 items-center", i < plans.length - 1 && "border-b border-gray-200")}
+                >
+                  <div className="px-6 py-4 text-sm text-secondary-500">{plan.name}</div>
+                  <div className="px-6 py-4 text-sm text-secondary-500">{formatNaira(plan.monthlyPrice)}</div>
+                  <div className="px-6 py-4 text-sm text-secondary-500">{plan.active ? "Active" : "Inactive"}</div>
+                  <div className="px-6 py-4">
+                    <button
+                      onClick={() => handleEditPlan(plan)}
+                      className="px-4 py-1.5 border border-gray-200 text-sm text-secondary-500 rounded-md hover:bg-gray-50 transition-colors"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
           <button
@@ -383,21 +509,14 @@ export default function AdminPlatformSettingsPage() {
         <section>
           <div className="flex items-center gap-3 mb-4 pb-2 border-b border-gray-200">
             <h2 className="text-base font-semibold text-secondary-600">Branding Controls</h2>
-            {logoUpdated && (
-              <span className="text-xs font-medium text-green-600">Logo updated</span>
-            )}
           </div>
 
           <div className="mb-6">
             <p className="text-sm font-semibold text-secondary-600 mb-3">Platform logo</p>
 
-            {logoName ? (
-
+            {platformSettings?.logoUrl ? (
               <div className="flex items-center gap-4">
-                <div className="border border-dashed border-gray-300 rounded-md p-4 flex flex-col items-center gap-2 w-44">
-                  <div className="w-8 h-8 bg-gray-300 rounded" />
-                  <p className="text-xs text-gray-400">Platform logoo</p>
-                </div>
+                <img src={platformSettings.logoUrl} alt="Platform logo" className="w-44 h-24 object-contain bg-gray-50 rounded-md border border-gray-200" />
                 <button
                   onClick={() => setView("upload-logo")}
                   className="px-4 py-2 border border-gray-200 text-sm text-secondary-500 rounded-md hover:bg-gray-50 transition-colors"
@@ -406,7 +525,6 @@ export default function AdminPlatformSettingsPage() {
                 </button>
               </div>
             ) : (
-
               <button
                 onClick={() => setView("upload-logo")}
                 className="w-full border-2 border-dashed border-gray-300 rounded-lg py-12 flex flex-col items-center gap-2 hover:border-primary-300 hover:bg-primary-50/20 transition-colors"
@@ -418,7 +536,7 @@ export default function AdminPlatformSettingsPage() {
             )}
           </div>
 
-          <div className="mb-5">
+          <div>
             <p className="text-sm font-semibold text-secondary-600 mb-2">Primary colour</p>
             <div className="flex items-center gap-3">
               <button
@@ -433,24 +551,13 @@ export default function AdminPlatformSettingsPage() {
                 className="border border-gray-200 rounded-md px-3 py-2 text-sm text-secondary-500 w-32 focus:outline-none focus:border-primary-400"
               />
               <input ref={primaryRef} type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="hidden" />
-            </div>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold text-secondary-600 mb-2">Secondary colour</p>
-            <div className="flex items-center gap-3">
               <button
-                onClick={() => secondaryRef.current?.click()}
-                className="w-10 h-10 rounded-md border border-gray-200 shrink-0"
-                style={{ backgroundColor: secondaryColor }}
-              />
-              <input
-                type="text"
-                value={secondaryColor}
-                onChange={(e) => setSecondaryColor(e.target.value)}
-                className="border border-gray-200 rounded-md px-3 py-2 text-sm text-secondary-500 w-32 focus:outline-none focus:border-primary-400"
-              />
-              <input ref={secondaryRef} type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="hidden" />
+                onClick={handleSavePrimaryColor}
+                disabled={updatePlatformSettingsMutation.isPending}
+                className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-white text-sm font-medium rounded-md transition-colors"
+              >
+                Save
+              </button>
             </div>
           </div>
         </section>
@@ -461,37 +568,48 @@ export default function AdminPlatformSettingsPage() {
           </h2>
 
           <div className="space-y-3">
-            {gateways.map((gw) => (
-              <div key={gw.name} className="border border-gray-200 rounded-lg px-5 py-4 flex items-center justify-between bg-white">
-                <div>
-                  <p className="text-sm font-semibold text-secondary-600">{gw.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Status: {gw.connected ? <>Connected <span className="text-green-500">✅</span></> : "Not Connected"}
-                  </p>
-                </div>
-
-                {gw.connected ? (
-                  <div className="flex gap-2">
-                    <button className="px-4 py-2 border border-gray-200 text-sm text-secondary-500 rounded-md hover:bg-gray-50 transition-colors">
-                      Configure
-                    </button>
-                    <button
-                      onClick={() => toggleGateway(gw.name)}
-                      className="px-4 py-2 border border-gray-200 text-sm text-secondary-500 rounded-md hover:bg-gray-50 transition-colors"
-                    >
-                      Disconnect
-                    </button>
+            {gateways.map((gw) => {
+              const isPaystack = gw.gateway === "PAYSTACK";
+              return (
+                <div key={gw.gateway} className="border border-gray-200 rounded-lg px-5 py-4 flex items-center justify-between bg-white">
+                  <div>
+                    <p className="text-sm font-semibold text-secondary-600 capitalize">{gw.gateway.toLowerCase()}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Status: {gw.connected ? <>Connected <span className="text-green-500">Yes</span></> : "Not Connected"}
+                    </p>
+                    {!isPaystack && (
+                      <p className="text-xs text-gray-400 mt-0.5">Not yet supported for connection.</p>
+                    )}
                   </div>
-                ) : (
-                  <button
-                    onClick={() => toggleGateway(gw.name)}
-                    className="px-5 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-md transition-colors"
-                  >
-                    Connect
-                  </button>
-                )}
-              </div>
-            ))}
+
+                  {isPaystack ? (
+                    gw.connected ? (
+                      <button
+                        onClick={() => disconnectPaystackMutation.mutate()}
+                        disabled={disconnectPaystackMutation.isPending}
+                        className="px-4 py-2 border border-gray-200 text-sm text-secondary-500 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+                      >
+                        {disconnectPaystackMutation.isPending ? "Disconnecting..." : "Disconnect"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setView("connect-paystack")}
+                        className="px-5 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-md transition-colors"
+                      >
+                        Connect
+                      </button>
+                    )
+                  ) : (
+                    <button
+                      disabled
+                      className="px-5 py-2 bg-gray-200 text-gray-400 text-sm font-medium rounded-md cursor-not-allowed"
+                    >
+                      Connect
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
 

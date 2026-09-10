@@ -9,6 +9,9 @@ const STATUS_MAP: Record<string, StatusVariant> = {
   Active: "success",
   Inactive: "neutral",
   Pending: "warning",
+  Approved: "info",
+  Rejected: "error",
+  Deactivated: "neutral",
   IN_REVIEW: "info",
 
   Draft: "warning",

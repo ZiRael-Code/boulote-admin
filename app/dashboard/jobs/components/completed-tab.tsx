@@ -1,28 +1,22 @@
 "use client";
 
-import { Search, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/button";
+import SearchInput from "@/components/ui/input/search-input";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { Pagination } from "@/components/ui/pagination";
 import { useCompletedJobs } from "@/hooks/use-jobs";
 import type { Job } from "@/lib/types/job";
 import { formatRelativeTime } from "@/lib/utils/format-date";
 
 export function CompletedTab() {
-  const { data, isLoading, error } = useCompletedJobs(true);
-
-  if (isLoading) {
-    return <LoadingSpinner message="Loading completed jobs..." className="py-12" />;
-  }
-
-  if (error) {
-    return <ErrorState title="Failed to load completed jobs" className="py-12" />;
-  }
-
-  if (!data?.content?.length) {
-    return <EmptyState message="No completed jobs found" className="py-12" />;
-  }
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const { data, isLoading, error } = useCompletedJobs(true, { search, page });
 
   return (
     <div className="flex flex-col gap-8">
@@ -41,36 +35,45 @@ export function CompletedTab() {
           <ChevronDown className="w-8 h-8" />
         </button>
 
-        <div className="border border-neutral-500 rounded-md h-12 px-6 py-4 flex items-center justify-between flex-1 max-w-md">
-          <span className="text-lg font-light text-secondary-500">Search</span>
-          <Search className="w-6 h-6" />
+        <SearchInput
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
+          className="flex-1 max-w-md"
+        />
+      </div>
+
+      {isLoading ? (
+        <LoadingSpinner message="Loading completed jobs..." className="py-12" />
+      ) : error ? (
+        <ErrorState title="Failed to load completed jobs" className="py-12" />
+      ) : !data?.content?.length ? (
+        <EmptyState message="No completed jobs found" className="py-12" />
+      ) : (
+        <div className="flex flex-col gap-6">
+          {data.content.map((job) => (
+            <CompletedJobCard key={job.id} job={job} />
+          ))}
+          {data.totalPages > 1 && (
+            <Pagination
+              currentPage={page + 1}
+              totalPages={data.totalPages}
+              totalItems={data.totalElements}
+              shownItems={data.numberOfElements}
+              itemLabel="jobs"
+              onPageChange={(p) => setPage(p - 1)}
+            />
+          )}
         </div>
-
-        <Button
-          variant="outline"
-          className="border border-neutral-500 px-7 py-3"
-        >
-          Generate report
-        </Button>
-      </div>
-
-      <Button
-        variant="outline"
-        className="border border-neutral-500 px-7 py-3 self-start"
-      >
-        Give feedback request
-      </Button>
-
-      <div className="flex flex-col gap-6">
-        {data.content.map((job) => (
-          <CompletedJobCard key={job.id} job={job} />
-        ))}
-      </div>
+      )}
     </div>
   );
 }
 
 function CompletedJobCard({ job }: { job: Job }) {
+  const router = useRouter();
   const rating = job.professionalRating || 0;
   const feedbackBg = rating >= 4 ? "bg-success-50" : "bg-warning-50";
   const feedbackText = rating >= 4 ? "text-success-900" : "text-warning-900";
@@ -118,7 +121,7 @@ function CompletedJobCard({ job }: { job: Job }) {
         <div className="flex flex-col gap-2">
           <p className="text-xs font-normal text-neutral-500">FINAL PAYMENT</p>
           <p className="text-sm font-normal text-secondary-500 tracking-[0.1px]">
-            {job.actualBudget || job.budget}
+            {job.budget}
           </p>
         </div>
       </div>
@@ -136,14 +139,9 @@ function CompletedJobCard({ job }: { job: Job }) {
         <Button
           variant="outline"
           className="border border-neutral-500 text-border-neutral-800 px-7 py-3"
+          onClick={() => router.push(`/dashboard/jobs/${job.id}`)}
         >
           View details
-        </Button>
-        <Button
-          variant="outline"
-          className="border border-neutral-500 text-border-neutral-800 px-7 py-3"
-        >
-          Performance Reports
         </Button>
       </div>
     </div>

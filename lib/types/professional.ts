@@ -125,12 +125,41 @@ export type QuizStats = {
 };
 
 export type QuizHistory = {
+  sessionId: number;
   quizName: string;
   dateTaken: string;
   questionCount: number;
   timeLimit: number;
   score: number;
   percentage: string;
+};
+
+export type QuizAnswerDetail = {
+  questionText: string;
+  selectedAnswer: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  skill: string | null;
+  difficulty: string | null;
+  timeTakenSeconds: number | null;
+  explanation: string | null;
+};
+
+export type QuizSessionDetail = {
+  sessionId: number;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  skippedAnswers: number;
+  totalAnswered: number;
+  timeTakenSeconds: number;
+  averageTimePerQuestion: number;
+  completedAt: string;
+  answers: QuizAnswerDetail[];
+  performanceFeedback: string | null;
+  accuracy: number;
+  completionRate: number;
+  timeEfficiency: string | null;
 };
 
 export type MentorEligibility = {
@@ -156,9 +185,12 @@ export type Activity = {
 };
 
 export type ProfessionalReview = {
-  id: number;
-  reviewerName: string;
-  rating: number;
-  comment: string;
+  companyName: string;
+  overallRating: number;
+  qualityOfWork: number;
+  communication: number;
+  wouldRecommend: boolean;
+  comment: string | null;
+  skillsMentioned: string[];
   createdAt: string;
 };

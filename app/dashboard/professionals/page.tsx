@@ -29,44 +29,34 @@ export default function ProfessionalsPage() {
   const { data: dashboardData, isLoading: isLoadingStats } =
       useProfessionalsDashboard(true);
   const { data: professionalsData, isLoading: isLoadingProfessionals } =
-      useProfessionals({}, true);
+      useProfessionals(
+          {
+            search: searchInput || undefined,
+            skills: selectedSkill || undefined,
+            ratings: selectedRating || undefined,
+            status: selectedStatus || undefined,
+            page: currentPage,
+          },
+          true,
+      );
 
   const stats = dashboardData?.stats;
-  const allProfessionals = professionalsData?.content || [];
+  const filtered = professionalsData?.content || [];
   const totalPages = professionalsData?.totalPages || 1;
 
-
+  // Options are derived from whatever's currently loaded, so this list only
+  // ever shows skills that appear on the current filtered page/result set —
+  // there's no dedicated "all skills" endpoint to populate it platform-wide.
   const allSkills = useMemo(() => {
     const skills = new Set<string>();
-    allProfessionals.forEach((p) => p.skills?.forEach((s) => skills.add(s)));
+    filtered.forEach((p) => p.skills?.forEach((s) => skills.add(s)));
     return Array.from(skills).sort();
-  }, [allProfessionals]);
+  }, [filtered]);
 
-
-  const filtered = useMemo(() => {
-    return allProfessionals.filter((p) => {
-      const matchesSearch =
-          !searchInput ||
-          p.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-          p.email.toLowerCase().includes(searchInput.toLowerCase());
-
-      const matchesSkill =
-          !selectedSkill || p.skills?.includes(selectedSkill);
-
-      const matchesRating =
-          !selectedRating ||
-          (selectedRating === "4.5+" && p.rating >= 4.5) ||
-          (selectedRating === "4.0-4.4" && p.rating >= 4.0 && p.rating < 4.5) ||
-          (selectedRating === "3.5-3.9" && p.rating >= 3.5 && p.rating < 4.0) ||
-          (selectedRating === "below-3.5" && p.rating < 3.5);
-
-      const matchesStatus =
-          !selectedStatus ||
-          p.status.toLowerCase() === selectedStatus.toLowerCase();
-
-      return matchesSearch && matchesSkill && matchesRating && matchesStatus;
-    });
-  }, [allProfessionals, searchInput, selectedSkill, selectedRating, selectedStatus]);
+  const updateFilter = (setter: (value: string) => void) => (value: string) => {
+    setter(value);
+    setCurrentPage(1);
+  };
 
   const getSubscriptionColor = (subscription: string) => {
     switch (subscription) {
@@ -101,7 +91,7 @@ export default function ProfessionalsPage() {
                   type="text"
                   placeholder="Search"
                   value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
+                  onChange={(e) => updateFilter(setSearchInput)(e.target.value)}
                   className="w-full h-12 pl-4 pr-12 border border-neutral-500 rounded-md text-base"
               />
               <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
@@ -109,7 +99,7 @@ export default function ProfessionalsPage() {
 
             <select
                 value={selectedSkill}
-                onChange={(e) => setSelectedSkill(e.target.value)}
+                onChange={(e) => updateFilter(setSelectedSkill)(e.target.value)}
                 className="h-12 px-4 border border-neutral-500 rounded-md text-base text-neutral-500 bg-white"
             >
               <option value="">All Skills</option>
@@ -120,7 +110,7 @@ export default function ProfessionalsPage() {
 
             <select
                 value={selectedRating}
-                onChange={(e) => setSelectedRating(e.target.value)}
+                onChange={(e) => updateFilter(setSelectedRating)(e.target.value)}
                 className="h-12 px-4 border border-neutral-500 rounded-md text-base text-neutral-500 bg-white"
             >
               <option value="">All Ratings</option>
@@ -132,7 +122,7 @@ export default function ProfessionalsPage() {
 
             <select
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
+                onChange={(e) => updateFilter(setSelectedStatus)(e.target.value)}
                 className="h-12 px-4 border border-neutral-500 rounded-md text-base text-neutral-500 bg-white"
             >
               <option value="">All Status</option>
@@ -166,8 +156,8 @@ export default function ProfessionalsPage() {
               <EmptyState message="No professionals found" className="py-12" />
             </div>
         ) : (
-            <div className="bg-white border border-border-500 rounded-lg overflow-hidden">
-              <table className="w-full">
+            <div className="bg-white border border-border-500 rounded-lg overflow-x-auto">
+              <table className="w-full min-w-[900px]">
                 <thead className="bg-neutral-100">
                 <tr>
                   <th className="text-left px-6 py-4 text-sm font-medium text-secondary-500">Professional</th>
@@ -193,12 +183,12 @@ export default function ProfessionalsPage() {
             </div>
         )}
 
-        {filtered.length > 0 && (
+        {professionalsData && professionalsData.totalPages > 1 && (
             <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                totalItems={filtered.length}
-                shownItems={filtered.length}
+                totalItems={professionalsData.totalElements}
+                shownItems={professionalsData.numberOfElements}
                 itemLabel="professionals"
                 onPageChange={setCurrentPage}
             />

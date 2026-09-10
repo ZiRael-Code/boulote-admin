@@ -11,6 +11,8 @@ import {
   banUser,
   unbanUser,
   getAllContent,
+  editQuestion,
+  editAnswer,
 } from "@/lib/api/services/community";
 
 export function useCommunityDashboard() {
@@ -90,8 +92,6 @@ export function useCommunityUsers(params: {
     queryFn: () => getCommunityUsers({ ...params, size: 10 }),
   });
 }
-
-import { editQuestion, editAnswer } from "@/lib/api/services/community";
 
 export function useEditQuestion() {
   const queryClient = useQueryClient();

@@ -4,20 +4,41 @@ import type {
   AIShortlistingStatusResponse,
   ShortlistingResult,
   ActiveProcessesResponse,
+  JobDetail,
 } from "@/lib/types/job";
 
-export async function getPendingJobs(): Promise<JobsResponse> {
-  const response = await axiosInstance.get<JobsResponse>("/admin/job/pending");
+export type JobFilters = {
+  search?: string;
+  budget?: string;
+  urgency?: string;
+  page?: number;
+};
+
+const PAGE_SIZE = 10;
+
+export async function getPendingJobs(filters: JobFilters = {}): Promise<JobsResponse> {
+  const response = await axiosInstance.get<JobsResponse>("/admin/job/pending", {
+    params: { ...filters, size: PAGE_SIZE },
+  });
   return response.data;
 }
 
-export async function getOngoingJobs(): Promise<JobsResponse> {
-  const response = await axiosInstance.get<JobsResponse>("/admin/job/ongoing");
+export async function getJobDetail(id: number): Promise<JobDetail> {
+  const response = await axiosInstance.get<JobDetail>(`/admin/job/${id}`);
   return response.data;
 }
 
-export async function getCompletedJobs(): Promise<JobsResponse> {
-  const response = await axiosInstance.get<JobsResponse>("/admin/job/completed");
+export async function getOngoingJobs(filters: JobFilters = {}): Promise<JobsResponse> {
+  const response = await axiosInstance.get<JobsResponse>("/admin/job/ongoing", {
+    params: { ...filters, size: PAGE_SIZE },
+  });
+  return response.data;
+}
+
+export async function getCompletedJobs(filters: JobFilters = {}): Promise<JobsResponse> {
+  const response = await axiosInstance.get<JobsResponse>("/admin/job/completed", {
+    params: { ...filters, size: PAGE_SIZE },
+  });
   return response.data;
 }
 
@@ -51,8 +72,17 @@ export async function getAIShortlistingResults(
   }
 }
 
-export async function getAIReviewJobs(): Promise<JobsResponse> {
-  const response = await axiosInstance.get<JobsResponse>("/admin/job/ai-review");
+export async function getAIReviewJobs(filters: JobFilters = {}): Promise<JobsResponse> {
+  const response = await axiosInstance.get<JobsResponse>("/admin/job/ai-review", {
+    params: { search: filters.search, urgency: filters.urgency, page: filters.page, size: PAGE_SIZE },
+  });
+  return response.data;
+}
+
+export async function getAssignedJobs(filters: JobFilters = {}): Promise<JobsResponse> {
+  const response = await axiosInstance.get<JobsResponse>("/admin/job/assigned", {
+    params: { search: filters.search, urgency: filters.urgency, page: filters.page, size: PAGE_SIZE },
+  });
   return response.data;
 }
 

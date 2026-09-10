@@ -4,6 +4,9 @@ import {
   bulkStartAIShortlisting,
   type BulkShortlistResult,
   getAIReviewJobs,
+  getAssignedJobs,
+  getJobDetail,
+  type JobFilters,
 } from "@/lib/api/services/jobs";
 
 import {
@@ -25,29 +28,30 @@ import type {
   ShortlistingResult,
   ActiveProcessesResponse,
   AIShortlistingStatus,
+  JobDetail,
 } from "@/lib/types/job";
 import toast from "react-hot-toast";
 
-export function usePendingJobs(enabled = true) {
+export function usePendingJobs(enabled = true, filters: JobFilters = {}) {
   return useQuery<JobsResponse>({
-    queryKey: ["jobs", "pending"],
-    queryFn: getPendingJobs,
+    queryKey: ["jobs", "pending", filters],
+    queryFn: () => getPendingJobs(filters),
     enabled,
   });
 }
 
-export function useOngoingJobs(enabled = true) {
+export function useOngoingJobs(enabled = true, filters: JobFilters = {}) {
   return useQuery<JobsResponse>({
-    queryKey: ["jobs", "ongoing"],
-    queryFn: getOngoingJobs,
+    queryKey: ["jobs", "ongoing", filters],
+    queryFn: () => getOngoingJobs(filters),
     enabled,
   });
 }
 
-export function useCompletedJobs(enabled = true) {
+export function useCompletedJobs(enabled = true, filters: JobFilters = {}) {
   return useQuery<JobsResponse>({
-    queryKey: ["jobs", "completed"],
-    queryFn: getCompletedJobs,
+    queryKey: ["jobs", "completed", filters],
+    queryFn: () => getCompletedJobs(filters),
     enabled,
   });
 }
@@ -124,7 +128,45 @@ export function useAssignSelectedProfessional() {
       ["jobs", "ai-review"],
       ["jobs", "pending"],
       ["jobs", "ongoing"],
+      ["jobs", "assigned"],
     ],
+  });
+}
+
+export function useBulkAssignSelectedProfessionals() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    { projectId: number; success: boolean }[],
+    Error,
+    AssignProfessionalRequest[]
+  >({
+    mutationFn: async (assignments) => {
+      const results = await Promise.allSettled(
+        assignments.map((a) => assignSelectedProfessional(a)),
+      );
+      return results.map((r, i) => ({
+        projectId: assignments[i].projectId,
+        success: r.status === "fulfilled",
+      }));
+    },
+    onSuccess: (results) => {
+      const succeeded = results.filter((r) => r.success).length;
+      const failed = results.length - succeeded;
+
+      if (succeeded > 0) {
+        toast.success(`Assigned professionals to ${succeeded} project(s)`);
+      }
+      if (failed > 0) {
+        toast.error(`Failed to assign professionals to ${failed} project(s)`);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["ai-shortlisting"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
+    onError: () => {
+      toast.error("Bulk assignment failed");
+    },
   });
 }
 
@@ -168,11 +210,27 @@ export function useBulkAIShortlisting() {
   });
 }
 
-export function useAIReviewJobs(enabled = true) {
+export function useJobDetail(id: number, enabled = true) {
+  return useQuery<JobDetail>({
+    queryKey: ["jobs", "detail", id],
+    queryFn: () => getJobDetail(id),
+    enabled: enabled && !!id,
+  });
+}
+
+export function useAIReviewJobs(enabled = true, filters: JobFilters = {}) {
   return useQuery<JobsResponse>({
-    queryKey: ["jobs", "ai-review"],
-    queryFn: getAIReviewJobs,
+    queryKey: ["jobs", "ai-review", filters],
+    queryFn: () => getAIReviewJobs(filters),
     enabled,
     refetchInterval: 10000,
+  });
+}
+
+export function useAssignedJobs(enabled = true, filters: JobFilters = {}) {
+  return useQuery<JobsResponse>({
+    queryKey: ["jobs", "assigned", filters],
+    queryFn: () => getAssignedJobs(filters),
+    enabled,
   });
 }
