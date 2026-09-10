@@ -70,6 +70,12 @@ export function Sidebar({ isOpen = true, onToggle }: SidebarProps) {
       label: "Notifications&Messaging",
       href: "/dashboard/notifications",
       iconSize: 32,
+    },
+    {
+      icon: "/assets/icon/dashboard/success.svg",
+      label: "Payments",
+      href: "/dashboard/payments",
+      iconSize: 24,
     }
   ];
 

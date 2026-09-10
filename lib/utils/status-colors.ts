@@ -24,6 +24,15 @@ const STATUS_MAP: Record<string, StatusVariant> = {
   ONGOING: "info",
   COMPLETED: "success",
   AI_REVIEW: "info",
+
+  PROCESSING: "info",
+  TRANSFER_FAILED: "error",
+  CHARGE_CARD_FAILED: "error",
+  DISPUTED: "error",
+  REFUNDED: "warning",
+  AWAITING_APPROVAL: "warning",
+  PENDING_PAYMENT: "warning",
+  PAID: "success",
 };
 
 export function getStatusVariant(status: string): StatusVariant {
