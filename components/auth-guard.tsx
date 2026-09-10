@@ -6,15 +6,15 @@ import { useAuthStore } from "@/lib/store/auth-store";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isAuthenticated, token } = useAuthStore();
+  const { isAuthenticated, token, hasHydrated } = useAuthStore();
 
   useEffect(() => {
-    if (!isAuthenticated || !token) {
+    if (hasHydrated && (!isAuthenticated || !token)) {
       router.replace("/auth/login");
     }
-  }, [isAuthenticated, token, router]);
+  }, [hasHydrated, isAuthenticated, token, router]);
 
-  if (!isAuthenticated || !token) {
+  if (!hasHydrated || !isAuthenticated || !token) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
