@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, FileText } from "lucide-react";
 import Button from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 import {
   useCompanyProfile,
   useApproveCompany,
@@ -172,11 +173,7 @@ function CompanyInfoTab({
     <div className="flex flex-col gap-6">
       <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center shrink-0">
-            <span className="text-lg font-medium text-secondary-500">
-              {initials}
-            </span>
-          </div>
+          <Avatar initials={initials} photoUrl={profile.logoUrl} size="xl" />
           <div className="flex flex-col">
             <h2 className="text-xl font-semibold text-secondary-500">
               {profile.name}

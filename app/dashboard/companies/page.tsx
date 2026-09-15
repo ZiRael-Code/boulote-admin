@@ -279,7 +279,7 @@ function CompanyRow({
     <tr className="hover:bg-neutral-50">
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <Avatar initials={company.initials} />
+          <Avatar initials={company.initials} photoUrl={company.logoUrl} />
           <div className="flex flex-col">
             <p className="text-sm font-medium text-secondary-500">
               {company.name}

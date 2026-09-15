@@ -54,7 +54,7 @@ export default function CompanyProfilePage() {
 
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div className="flex gap-6 flex-wrap">
-          <Avatar initials={initials} size="xl" />
+          <Avatar initials={initials} photoUrl={profile.logoUrl} size="xl" />
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl font-semibold text-secondary-500">
               {profile.name}

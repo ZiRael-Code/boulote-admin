@@ -9,6 +9,7 @@ export type CompanyStatus = "Active" | "Approved" | "Pending" | "Rejected" | "De
 export type Company = {
   id: number;
   initials: string;
+  logoUrl?: string | null;
   name: string;
   email: string;
   industry: string;
@@ -52,6 +53,7 @@ export type CompaniesResponse = PaginatedResponse<Company>;
 export type PendingCompanyApproval = {
   id: number;
   initials: string;
+  logoUrl?: string | null;
   name: string;
   email: string;
   industry: string;
@@ -67,6 +69,7 @@ export type PendingCompaniesResponse = PendingCompanyApproval[];
 
 export type CompanyProfile = {
   id: number;
+  logoUrl?: string | null;
   name: string;
   email: string;
   phone?: string;

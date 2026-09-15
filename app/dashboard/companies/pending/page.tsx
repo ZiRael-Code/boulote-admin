@@ -148,7 +148,7 @@ function PendingCompanyCard({
     <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-4">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <Avatar initials={company.initials} size="lg" />
+          <Avatar initials={company.initials} photoUrl={company.logoUrl} size="lg" />
           <div className="flex flex-col">
             <h3 className="text-base font-semibold text-secondary-500">
               {company.name}
