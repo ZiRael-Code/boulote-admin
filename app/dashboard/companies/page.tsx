@@ -16,6 +16,7 @@ import {
   useCompanyFilterOptions,
 } from "@/hooks/use-companies";
 import { formatRelativeTime } from "@/lib/utils/format-date";
+import { exportToCsv } from "@/lib/utils/csv-export";
 import type { Company } from "@/lib/types/company";
 
 export default function CompaniesPage() {
@@ -44,6 +45,19 @@ export default function CompaniesPage() {
   const companies = companiesData?.content || [];
   const totalCompanies = companiesData?.totalElements || 0;
   const totalPages = companiesData?.totalPages || 1;
+
+  const handleExportCsv = () => {
+    exportToCsv(`companies-page-${currentPage}.csv`, companies, [
+      { label: "Company", value: (c) => c.name },
+      { label: "Email", value: (c) => c.email },
+      { label: "Industry", value: (c) => c.industry },
+      { label: "Size", value: (c) => c.size },
+      { label: "Plan", value: (c) => c.plan },
+      { label: "Status", value: (c) => c.status },
+      { label: "Last Active", value: (c) => c.lastActive },
+      { label: "Joined Date", value: (c) => c.joinedDate },
+    ]);
+  };
 
   return (
     <div className="flex flex-col gap-8 px-8 py-8">
@@ -165,7 +179,13 @@ export default function CompaniesPage() {
             ))}
           </select>
 
-          <Button variant="outline" className="h-12 px-6 border border-neutral-500">
+          <Button
+            variant="outline"
+            className="h-12 px-6 border border-neutral-500"
+            onClick={handleExportCsv}
+            disabled={companies.length === 0}
+            title="Exports the companies currently shown on this page"
+          >
             <span className="text-base font-normal text-secondary-500">
               Export CSV
             </span>
@@ -315,6 +335,7 @@ function CompanyRow({
             <Button
               variant="outline"
               className="h-10 px-6 border border-neutral-500"
+              onClick={() => router.push(`/dashboard/companies/${company.id}`)}
             >
               <span className="text-sm font-medium">Edit</span>
             </Button>

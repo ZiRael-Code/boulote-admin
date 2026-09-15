@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 type SidebarProps = {
   isOpen?: boolean;
@@ -16,6 +17,7 @@ type MenuItem = {
 };
 
 export function Sidebar({ isOpen = true, onToggle }: SidebarProps) {
+  const pathname = usePathname();
   const menuItems: MenuItem[] = [
     {
       icon: "/assets/icon/dashboard/overview.svg",
@@ -121,44 +123,58 @@ export function Sidebar({ isOpen = true, onToggle }: SidebarProps) {
 
         <div className="h-8 shrink-0 w-full" />
 
-        <nav className="flex flex-col gap-[33px] overflow-y-auto scrollbar-hide">
-          {menuItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group relative flex items-center h-8 shrink-0 hover:bg-neutral-50 rounded transition-colors"
-              title={!isOpen ? item.label : undefined}
-            >
-              <div
-                className={`flex items-center transition-all duration-300 ${
-                  isOpen ? "gap-4" : "justify-center w-full"
+        <nav className="flex flex-col gap-[33px] overflow-y-auto pr-1">
+          {menuItems.map((item) => {
+            const isActive =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname === item.href || pathname.startsWith(item.href + "/");
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`group relative flex items-center h-8 shrink-0 rounded transition-colors ${
+                  isActive ? "bg-primary-50" : "hover:bg-neutral-50"
                 }`}
+                title={!isOpen ? item.label : undefined}
               >
-                <Image
-                  src={item.icon}
-                  alt={item.label}
-                  width={item.iconSize}
-                  height={item.iconSize}
-                  className="shrink-0"
-                />
-                <p
-                  className={`font-medium text-lg leading-[21.6px] text-secondary-500 whitespace-nowrap transition-all duration-300 ${
-                    isOpen
-                      ? "opacity-100 translate-x-0"
-                      : "opacity-0 -translate-x-4 absolute pointer-events-none"
+                {isActive && (
+                  <div className="absolute left-0 top-0 h-full w-1 bg-primary-500 rounded-r" />
+                )}
+                <div
+                  className={`flex items-center transition-all duration-300 ${
+                    isOpen ? "gap-4" : "justify-center w-full"
                   }`}
                 >
-                  {item.label}
-                </p>
-              </div>
-
-              {!isOpen && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-secondary-900 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                  {item.label}
+                  <Image
+                    src={item.icon}
+                    alt={item.label}
+                    width={item.iconSize}
+                    height={item.iconSize}
+                    className="shrink-0"
+                  />
+                  <p
+                    className={`font-medium text-lg leading-[21.6px] whitespace-nowrap transition-all duration-300 ${
+                      isActive ? "text-primary-500" : "text-secondary-500"
+                    } ${
+                      isOpen
+                        ? "opacity-100 translate-x-0"
+                        : "opacity-0 -translate-x-4 absolute pointer-events-none"
+                    }`}
+                  >
+                    {item.label}
+                  </p>
                 </div>
-              )}
-            </Link>
-          ))}
+
+                {!isOpen && (
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-secondary-900 text-white text-sm rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                    {item.label}
+                  </div>
+                )}
+              </Link>
+            );
+          })}
         </nav>
       </aside>
     </>

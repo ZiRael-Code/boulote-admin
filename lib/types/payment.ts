@@ -10,6 +10,7 @@ export type AdminPaymentTransaction = {
   professionalPayout: number | null;
   status: string;
   message: string | null;
+  pendingSettlement: boolean;
   paystackTransferReference: string | null;
   submittedAt: string | null;
   paidAt: string | null;

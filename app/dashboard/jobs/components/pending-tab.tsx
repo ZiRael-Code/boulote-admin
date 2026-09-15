@@ -24,6 +24,7 @@ import {
 } from "@/hooks/use-jobs";
 import type { Job } from "@/lib/types/job";
 import { formatRelativeTime } from "@/lib/utils/format-date";
+import { exportToCsv } from "@/lib/utils/csv-export";
 import { ShortlistingResultsModal } from "./shortlisting-modal";
 
 const BUDGET_OPTIONS = [
@@ -61,6 +62,18 @@ export function PendingRequestsTab() {
     });
   };
 
+  const handleExportCsv = () => {
+    exportToCsv(`pending-jobs-page-${page + 1}.csv`, jobs, [
+      { label: "Job ID", value: (j) => j.jobId },
+      { label: "Title", value: (j) => j.title },
+      { label: "Company", value: (j) => j.companyName },
+      { label: "Budget", value: (j) => j.budget },
+      { label: "Duration", value: (j) => j.duration },
+      { label: "Urgency", value: (j) => j.urgency },
+      { label: "Submitted", value: (j) => j.submittedAt },
+    ]);
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex gap-4 items-center flex-wrap">
@@ -91,7 +104,12 @@ export function PendingRequestsTab() {
           className="!h-12 !py-2 w-auto"
         />
 
-        <button className="border border-neutral-500 rounded-md h-12 px-6 py-4 flex items-center">
+        <button
+          onClick={handleExportCsv}
+          disabled={jobs.length === 0}
+          className="border border-neutral-500 rounded-md h-12 px-6 py-4 flex items-center disabled:opacity-50"
+          title="Exports the pending jobs currently shown on this page"
+        >
           <span className="text-lg font-light text-secondary-500">Export</span>
         </button>
 

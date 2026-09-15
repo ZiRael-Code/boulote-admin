@@ -16,6 +16,7 @@ import {
 } from "@/hooks/use-professionals";
 import { formatDate } from "@/lib/utils/format-date";
 import { getStatusTextColor } from "@/lib/utils/status-colors";
+import { exportToCsv } from "@/lib/utils/csv-export";
 import type { Professional } from "@/lib/types/professional";
 
 export default function ProfessionalsPage() {
@@ -56,6 +57,19 @@ export default function ProfessionalsPage() {
   const updateFilter = (setter: (value: string) => void) => (value: string) => {
     setter(value);
     setCurrentPage(1);
+  };
+
+  const handleExportCsv = () => {
+    exportToCsv(`professionals-page-${currentPage}.csv`, filtered, [
+      { label: "Name", value: (p) => p.name },
+      { label: "Email", value: (p) => p.email },
+      { label: "Skills", value: (p) => p.skills?.join("; ") },
+      { label: "Rating", value: (p) => p.rating },
+      { label: "Reviews", value: (p) => p.reviewCount },
+      { label: "Subscription", value: (p) => p.subscription },
+      { label: "Status", value: (p) => p.status },
+      { label: "Joined Date", value: (p) => p.joinedDate },
+    ]);
   };
 
   const getSubscriptionColor = (subscription: string) => {
@@ -133,7 +147,13 @@ export default function ProfessionalsPage() {
           </div>
 
           <div className="flex gap-4">
-            <Button variant="outline" className="h-12 px-6 border border-neutral-500">
+            <Button
+                variant="outline"
+                className="h-12 px-6 border border-neutral-500"
+                onClick={handleExportCsv}
+                disabled={filtered.length === 0}
+                title="Exports the professionals currently shown on this page"
+            >
               <span className="text-base font-normal text-secondary-500">Export CSV</span>
             </Button>
             <Button

@@ -104,6 +104,11 @@ function PaymentRow({
   onReconcile: () => void;
   isReconciling: boolean;
 }) {
+  // A transfer can need a reconcile click without being an urgent problem,
+  // settling is expected and temporary, so the button stays available for it,
+  // it just doesn't get the same alarming red styling as a genuine failure.
+  const canReconcile = tx.status === "TRANSFER_FAILED" || tx.status === "CHARGE_CARD_FAILED" || tx.status === "DISPUTED";
+
   return (
     <div
       className={`border rounded-md p-6 flex flex-col gap-4 ${
@@ -141,10 +146,18 @@ function PaymentRow({
       </div>
 
       {tx.message && (
-        <p className="text-sm text-error-600 bg-white/60 rounded-md p-3">{tx.message}</p>
+        <p
+          className={`text-sm rounded-md p-3 ${
+            tx.pendingSettlement ? "text-primary-600 bg-primary-50" : "text-error-600 bg-white/60"
+          }`}
+        >
+          {tx.pendingSettlement
+            ? "Not an actual failure, waiting on funds to settle with Paystack: " + tx.message
+            : tx.message}
+        </p>
       )}
 
-      {tx.needsAttention && (
+      {canReconcile && (
         <div className="flex justify-end">
           <Button
             variant="primary"

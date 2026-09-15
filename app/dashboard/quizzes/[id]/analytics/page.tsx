@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Button from "@/components/ui/button";
 import { useQuiz } from "@/hooks/use-quizzes";
 import { formatRelativeTime } from "@/lib/utils/format-date";
+import { buildCsv, downloadCsv } from "@/lib/utils/csv-export";
 import type { QuizAttempt, QuizDetails } from "@/lib/types/quiz";
 
 export default function QuizAnalyticsPage() {
@@ -30,6 +31,31 @@ export default function QuizAnalyticsPage() {
     );
   }
 
+  const handleExportCsv = () => {
+    type PerformanceRow = NonNullable<QuizDetails["performanceByQuestion"]>[number];
+    const questionCsv = quiz.performanceByQuestion?.length
+      ? buildCsv<PerformanceRow>(quiz.performanceByQuestion, [
+          { label: "Question", value: (r) => r.questionText },
+          { label: "Correct %", value: (r) => r.correctPercentage.toFixed(1) },
+          { label: "Avg. Time (s)", value: (r) => r.avgTimeSeconds.toFixed(0) },
+          { label: "Difficulty", value: (r) => r.difficulty },
+        ])
+      : "No performance data available";
+
+    const attemptsCsv = quiz.recentActivities?.length
+      ? buildCsv<QuizAttempt>(quiz.recentActivities, [
+          { label: "Professional", value: (a) => a.professionalName },
+          { label: "Score %", value: (a) => a.score },
+          { label: "Duration (min)", value: (a) => a.duration },
+          { label: "Completed At", value: (a) => a.completedAt },
+          { label: "Passed", value: (a) => (a.passed ? "Yes" : "No") },
+        ])
+      : "No recent attempts";
+
+    const combined = `Performance by Question\n${questionCsv}\n\nRecent Attempts\n${attemptsCsv}`;
+    downloadCsv(`quiz-${quiz.title}-analytics.csv`, combined);
+  };
+
   return (
     <div className="flex flex-col gap-6 px-4 py-8 lg:pl-16 lg:pr-8 lg:py-16">
       <div className="flex items-center justify-between">
@@ -44,7 +70,7 @@ export default function QuizAnalyticsPage() {
             {quiz.title} - Analytics
           </h1>
         </div>
-        <Button variant="secondary">Export</Button>
+        <Button variant="secondary" onClick={handleExportCsv}>Export</Button>
       </div>
 
       <div className="flex flex-col gap-4">
