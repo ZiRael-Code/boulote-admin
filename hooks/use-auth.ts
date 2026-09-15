@@ -50,10 +50,29 @@ export const useAuth = () => {
     },
   });
 
+  const forgotPasswordMutation = useMutation({
+    mutationFn: (email: string) => authService.forgotPassword(email),
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: ({ token, password }: { token: string; password: string }) =>
+      authService.resetPassword(token, password),
+    onSuccess: () => {
+      router.push("/auth/login?reset=success");
+    },
+  });
+
   return {
     login: loginMutation.mutate,
     logout: logoutMutation.mutate,
     isLoginLoading: loginMutation.isPending,
     loginError: loginMutation.error,
+    forgotPassword: forgotPasswordMutation.mutate,
+    isForgotPasswordLoading: forgotPasswordMutation.isPending,
+    forgotPasswordError: forgotPasswordMutation.error,
+    isForgotPasswordSuccess: forgotPasswordMutation.isSuccess,
+    resetPassword: resetPasswordMutation.mutate,
+    isResetPasswordLoading: resetPasswordMutation.isPending,
+    resetPasswordError: resetPasswordMutation.error,
   };
 };
