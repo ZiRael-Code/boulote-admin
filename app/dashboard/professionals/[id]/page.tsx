@@ -48,7 +48,7 @@ export default function ProfessionalProfilePage() {
 
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div className="flex gap-6">
-            <Avatar initials={initials} size="xl" />
+            <Avatar initials={initials} photoUrl={profile.profilePictureUrl} size="xl" />
             <div className="flex flex-col gap-2">
               <h2 className="text-2xl font-semibold text-secondary-500">{profile.name}</h2>
               <p className="text-base text-secondary-500">{profile.role}</p>

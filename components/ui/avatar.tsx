@@ -1,11 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils/cn";
+import { useAuthImage } from "@/hooks/use-auth-image";
 
 type AvatarSize = "sm" | "md" | "lg" | "xl";
 
 type AvatarProps = {
   initials: string;
+  photoUrl?: string | null;
   size?: AvatarSize;
   className?: string;
 };
@@ -17,7 +19,23 @@ const sizeClasses: Record<AvatarSize, string> = {
   xl: "w-[100px] h-[100px] text-2xl",
 };
 
-export function Avatar({ initials, size = "md", className }: AvatarProps) {
+export function Avatar({ initials, photoUrl, size = "md", className }: AvatarProps) {
+  const { blobUrl } = useAuthImage(photoUrl);
+
+  if (blobUrl) {
+    return (
+      <img
+        src={blobUrl}
+        alt={initials}
+        className={cn(
+          "rounded-full object-cover shrink-0",
+          sizeClasses[size],
+          className
+        )}
+      />
+    );
+  }
+
   return (
     <div
       className={cn(

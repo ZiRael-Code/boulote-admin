@@ -230,7 +230,7 @@ function ProfessionalRow({
       <tr className="hover:bg-neutral-50">
         <td className="px-6 py-4">
           <div className="flex items-center gap-3">
-            <Avatar initials={professional.initials} />
+            <Avatar initials={professional.initials} photoUrl={professional.profilePictureUrl} />
             <div className="flex flex-col">
               <p className="text-sm font-medium text-secondary-500">{professional.name}</p>
               <p className="text-xs text-neutral-500">{professional.email}</p>

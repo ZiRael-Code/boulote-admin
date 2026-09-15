@@ -13,6 +13,7 @@ export type Subscription = "BASIC" | "PREMIUM";
 export type Professional = {
   id: number;
   initials: string;
+  profilePictureUrl?: string | null;
   name: string;
   email: string;
   role: ProfessionalRole;
@@ -45,6 +46,7 @@ export type ProfessionalsResponse = PaginatedResponse<Professional>;
 export type PendingApproval = {
   id: number;
   initials: string;
+  profilePictureUrl?: string | null;
   name: string;
   email: string;
   skills: string[];
@@ -61,6 +63,7 @@ export type PendingApprovalsResponse = {
 
 export type ProfessionalProfile = {
   id: number;
+  profilePictureUrl?: string | null;
   name: string;
   email: string;
   phone: string;
