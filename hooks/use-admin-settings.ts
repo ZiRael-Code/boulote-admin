@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMutationWithToast } from "./use-mutation-with-toast";
 import {
   changePassword,
+  changeEmail,
   getPlans,
   createPlan,
   updatePlan,
@@ -26,6 +27,15 @@ export function useChangePassword() {
     mutationFn: (data: { oldPassword: string; newPassword: string }) => changePassword(data),
     successMessage: "Password changed successfully",
     errorMessage: "Failed to change password",
+    invalidateKeys: [],
+  });
+}
+
+export function useChangeEmail() {
+  return useMutationWithToast({
+    mutationFn: (data: { currentPassword: string; newEmail: string }) => changeEmail(data),
+    successMessage: "Email changed successfully — use it next time you log in",
+    errorMessage: "Failed to change email",
     invalidateKeys: [],
   });
 }

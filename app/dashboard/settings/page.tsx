@@ -14,6 +14,7 @@ import {
   usePlatformSettings,
   useUpdatePlatformSettings,
   useChangePassword,
+  useChangeEmail,
 } from "@/hooks/use-admin-settings";
 import type { SubscriptionPlan, SavePlanRequest } from "@/lib/types/admin-settings";
 
@@ -312,6 +313,64 @@ function ConnectPaystackView({
         </div>
       </div>
     </div>
+  );
+}
+
+function ChangeEmailSection() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const mutation = useChangeEmail();
+
+  const canSubmit = currentPassword.length > 0 && /\S+@\S+\.\S+/.test(newEmail);
+
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    mutation.mutate(
+      { currentPassword, newEmail },
+      {
+        onSuccess: () => {
+          setCurrentPassword("");
+          setNewEmail("");
+        },
+      }
+    );
+  };
+
+  return (
+    <section>
+      <h2 className="text-base font-semibold text-secondary-600 mb-4 pb-2 border-b border-gray-200">
+        Account Email
+      </h2>
+
+      <div className="space-y-5 max-w-md">
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5">New email address</label>
+          <input
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="you@yourdomain.com"
+            className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5">Confirm with current password</label>
+          <input
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors"
+          />
+        </div>
+        <button
+          onClick={handleSubmit}
+          disabled={!canSubmit || mutation.isPending}
+          className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50"
+        >
+          {mutation.isPending ? "Changing..." : "Change email"}
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -685,6 +744,7 @@ export default function AdminPlatformSettingsPage() {
           </div>
         </section>
 
+        <ChangeEmailSection />
         <ChangePasswordSection />
 
       </div>
