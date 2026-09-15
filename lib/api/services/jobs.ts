@@ -11,6 +11,7 @@ export type JobFilters = {
   search?: string;
   budget?: string;
   urgency?: string;
+  category?: string;
   page?: number;
 };
 

@@ -1,39 +1,134 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/button";
 import SearchInput from "@/components/ui/input/search-input";
+import Select from "@/components/ui/input/select";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Pagination } from "@/components/ui/pagination";
-import { useCompletedJobs } from "@/hooks/use-jobs";
+import { useCompletedJobs, useJobCategories } from "@/hooks/use-jobs";
 import type { Job } from "@/lib/types/job";
 import { formatRelativeTime } from "@/lib/utils/format-date";
 
+const BUDGET_OPTIONS = [
+  { value: "Under ₦500,000", label: "Under ₦500,000" },
+  { value: "₦500,000 - ₦2,000,000", label: "₦500,000 - ₦2,000,000" },
+  { value: "Over ₦2,000,000", label: "Over ₦2,000,000" },
+];
+
+const URGENCY_OPTIONS = [
+  { value: "Normal", label: "Normal" },
+  { value: "High", label: "High" },
+  { value: "Urgent", label: "Urgent" },
+];
+
+// No backend "completed within N days" param exists — filters the
+// completionDate of whatever's already loaded on the current page.
+const DAYS_OPTIONS = [
+  { value: "7", label: "Last 7 days" },
+  { value: "30", label: "Last 30 days" },
+  { value: "90", label: "Last 90 days" },
+];
+
+// Same as above — client-side over the current page, no backend rating param.
+const RATING_OPTIONS = [
+  { value: "4", label: "4 and above" },
+  { value: "3", label: "3 to 4" },
+  { value: "below3", label: "Below 3" },
+];
+
 export function CompletedTab() {
   const [search, setSearch] = useState("");
+  const [budget, setBudget] = useState("");
+  const [urgency, setUrgency] = useState("");
+  const [category, setCategory] = useState("");
+  const [daysFilter, setDaysFilter] = useState("");
+  const [ratingFilter, setRatingFilter] = useState("");
   const [page, setPage] = useState(0);
-  const { data, isLoading, error } = useCompletedJobs(true, { search, page });
+  const { data, isLoading, error } = useCompletedJobs(true, {
+    search,
+    budget,
+    urgency,
+    category,
+    page,
+  });
+  const { data: categoryOptions } = useJobCategories();
+
+  const visibleJobs = useMemo(() => {
+    let jobs = data?.content ?? [];
+    if (daysFilter) {
+      const cutoff = Date.now() - Number(daysFilter) * 24 * 60 * 60 * 1000;
+      jobs = jobs.filter(
+        (j) => j.completionDate && new Date(j.completionDate).getTime() >= cutoff,
+      );
+    }
+    if (ratingFilter) {
+      jobs = jobs.filter((j) => {
+        const rating = j.professionalRating ?? 0;
+        if (ratingFilter === "4") return rating >= 4;
+        if (ratingFilter === "3") return rating >= 3 && rating < 4;
+        return rating < 3;
+      });
+    }
+    return jobs;
+  }, [data?.content, daysFilter, ratingFilter]);
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex gap-4 items-center">
-        <button className="border border-neutral-500 rounded-md px-4 py-2 flex gap-4 items-center">
-          <span className="text-base font-normal text-neutral-500">
-            Last 30 days
-          </span>
-          <ChevronDown className="w-8 h-8" />
-        </button>
+      <div className="flex gap-4 items-center flex-wrap">
+        <Select
+          value={daysFilter}
+          onChange={(e) => setDaysFilter(e.target.value)}
+          options={DAYS_OPTIONS}
+          placeholder="Last 30 days"
+          className="!h-12 !py-2 w-auto"
+          title="Filters within the jobs currently shown on this page"
+        />
 
-        <button className="border border-neutral-500 rounded-md px-4 py-2 flex gap-4 items-center">
-          <span className="text-base font-normal text-neutral-500">
-            All Ratings
-          </span>
-          <ChevronDown className="w-8 h-8" />
-        </button>
+        <Select
+          value={ratingFilter}
+          onChange={(e) => setRatingFilter(e.target.value)}
+          options={RATING_OPTIONS}
+          placeholder="All Ratings"
+          className="!h-12 !py-2 w-auto"
+          title="Filters within the jobs currently shown on this page"
+        />
+
+        <Select
+          value={category}
+          onChange={(e) => {
+            setCategory(e.target.value);
+            setPage(0);
+          }}
+          options={(categoryOptions ?? []).map((c) => ({ value: c, label: c }))}
+          placeholder="All categories"
+          className="!h-12 !py-2 w-auto"
+        />
+
+        <Select
+          value={budget}
+          onChange={(e) => {
+            setBudget(e.target.value);
+            setPage(0);
+          }}
+          options={BUDGET_OPTIONS}
+          placeholder="All Budgets"
+          className="!h-12 !py-2 w-auto"
+        />
+
+        <Select
+          value={urgency}
+          onChange={(e) => {
+            setUrgency(e.target.value);
+            setPage(0);
+          }}
+          options={URGENCY_OPTIONS}
+          placeholder="All Urgency"
+          className="!h-12 !py-2 w-auto"
+        />
 
         <SearchInput
           value={search}
@@ -51,9 +146,11 @@ export function CompletedTab() {
         <ErrorState title="Failed to load completed jobs" className="py-12" />
       ) : !data?.content?.length ? (
         <EmptyState message="No completed jobs found" className="py-12" />
+      ) : visibleJobs.length === 0 ? (
+        <EmptyState message="No completed jobs match these filters on this page" className="py-12" />
       ) : (
         <div className="flex flex-col gap-6">
-          {data.content.map((job) => (
+          {visibleJobs.map((job) => (
             <CompletedJobCard key={job.id} job={job} />
           ))}
           {data.totalPages > 1 && (

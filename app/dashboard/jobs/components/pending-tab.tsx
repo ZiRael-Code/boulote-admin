@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ChevronDown,
   CheckCircle2,
   Loader2,
   AlertCircle,
@@ -21,6 +20,7 @@ import {
   useAIShortlistingStatus,
   useAIShortlistingResults,
   useBulkAIShortlisting,
+  useJobCategories,
 } from "@/hooks/use-jobs";
 import type { Job } from "@/lib/types/job";
 import { formatRelativeTime } from "@/lib/utils/format-date";
@@ -36,8 +36,10 @@ const BUDGET_OPTIONS = [
 export function PendingRequestsTab() {
   const [search, setSearch] = useState("");
   const [budget, setBudget] = useState("");
+  const [category, setCategory] = useState("");
   const [page, setPage] = useState(0);
-  const { data, isLoading, error } = usePendingJobs(true, { search, budget, page });
+  const { data, isLoading, error } = usePendingJobs(true, { search, budget, category, page });
+  const { data: categoryOptions } = useJobCategories();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const bulkShortlist = useBulkAIShortlisting();
 
@@ -86,12 +88,16 @@ export function PendingRequestsTab() {
           className="w-[278px]"
         />
 
-        <button className="border border-neutral-500 rounded-md px-4 py-2 flex gap-4 items-center">
-          <span className="text-base font-normal text-neutral-500">
-            All categories
-          </span>
-          <ChevronDown className="w-8 h-8" />
-        </button>
+        <Select
+          value={category}
+          onChange={(e) => {
+            setCategory(e.target.value);
+            setPage(0);
+          }}
+          options={(categoryOptions ?? []).map((c) => ({ value: c, label: c }))}
+          placeholder="All categories"
+          className="!h-12 !py-2 w-auto"
+        />
 
         <Select
           value={budget}

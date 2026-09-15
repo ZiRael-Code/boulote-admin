@@ -22,6 +22,7 @@ import {
   type AssignProfessionalRequest,
   type RejectAllRequest,
 } from "@/lib/api/services/jobs";
+import { getJobCategoryOptions } from "@/lib/api/services/job-categories";
 import type {
   JobsResponse,
   AIShortlistingStatusResponse,
@@ -37,6 +38,16 @@ export function usePendingJobs(enabled = true, filters: JobFilters = {}) {
     queryKey: ["jobs", "pending", filters],
     queryFn: () => getPendingJobs(filters),
     enabled,
+  });
+}
+
+// Real skill catalog, shared across all three job tabs' category filter —
+// stable list, so it's fine to cache for the session.
+export function useJobCategories() {
+  return useQuery<string[]>({
+    queryKey: ["jobs", "categories"],
+    queryFn: getJobCategoryOptions,
+    staleTime: 10 * 60 * 1000,
   });
 }
 
