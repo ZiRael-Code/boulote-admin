@@ -8,6 +8,10 @@ import type {
   UpdatePlatformSettingsRequest,
 } from "@/lib/types/admin-settings";
 
+export async function changePassword(data: { oldPassword: string; newPassword: string }): Promise<void> {
+  await axiosInstance.post("/user/change", data);
+}
+
 export async function getPlans(): Promise<SubscriptionPlan[]> {
   const response = await axiosInstance.get<SubscriptionPlan[]>("/admin/subscription/plans");
   return response.data;

@@ -13,6 +13,7 @@ import {
   useDisconnectPaystack,
   usePlatformSettings,
   useUpdatePlatformSettings,
+  useChangePassword,
 } from "@/hooks/use-admin-settings";
 import type { SubscriptionPlan, SavePlanRequest } from "@/lib/types/admin-settings";
 
@@ -314,6 +315,77 @@ function ConnectPaystackView({
   );
 }
 
+function ChangePasswordSection() {
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const mutation = useChangePassword();
+
+  const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
+  const canSubmit = oldPassword.length > 0 && newPassword.length >= 6 && newPassword === confirmPassword;
+
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    mutation.mutate(
+      { oldPassword, newPassword },
+      {
+        onSuccess: () => {
+          setOldPassword("");
+          setNewPassword("");
+          setConfirmPassword("");
+        },
+      }
+    );
+  };
+
+  return (
+    <section>
+      <h2 className="text-base font-semibold text-secondary-600 mb-4 pb-2 border-b border-gray-200">
+        Account Security
+      </h2>
+
+      <div className="space-y-5 max-w-md">
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5">Current password</label>
+          <input
+            type="password"
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5">New password</label>
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="At least 6 characters"
+            className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-400 mb-1.5">Confirm new password</label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-secondary-600 focus:outline-none focus:border-primary-400 transition-colors"
+          />
+          {mismatch && <p className="text-xs text-error-500 mt-1.5">Passwords don't match</p>}
+        </div>
+        <button
+          onClick={handleSubmit}
+          disabled={!canSubmit || mutation.isPending}
+          className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50"
+        >
+          {mutation.isPending ? "Changing..." : "Change password"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export default function AdminPlatformSettingsPage() {
   const router = useRouter();
 
@@ -612,6 +684,8 @@ export default function AdminPlatformSettingsPage() {
             })}
           </div>
         </section>
+
+        <ChangePasswordSection />
 
       </div>
     </div>

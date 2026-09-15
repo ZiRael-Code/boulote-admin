@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMutationWithToast } from "./use-mutation-with-toast";
 import {
+  changePassword,
   getPlans,
   createPlan,
   updatePlan,
@@ -19,6 +20,15 @@ import type {
   PlatformSettings,
   UpdatePlatformSettingsRequest,
 } from "@/lib/types/admin-settings";
+
+export function useChangePassword() {
+  return useMutationWithToast({
+    mutationFn: (data: { oldPassword: string; newPassword: string }) => changePassword(data),
+    successMessage: "Password changed successfully",
+    errorMessage: "Failed to change password",
+    invalidateKeys: [],
+  });
+}
 
 export function usePlans(enabled = true) {
   return useQuery<SubscriptionPlan[]>({
