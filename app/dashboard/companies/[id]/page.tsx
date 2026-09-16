@@ -6,6 +6,7 @@ import { FileText, MapPin, Users, Calendar, Globe } from "lucide-react";
 import Button from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { Avatar } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { BackButton } from "@/components/ui/back-button";
@@ -23,12 +24,22 @@ export default function CompanyProfilePage() {
   const companyId = Number(params.id);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
 
-  const { data: profile, isLoading } = useCompanyProfile(companyId, true);
+  const { data: profile, isLoading, error } = useCompanyProfile(companyId, true);
 
   if (isLoading) {
     return (
       <div className="flex flex-col gap-8 px-8 py-8">
         <LoadingSpinner message="Loading company profile..." className="py-32" />
+      </div>
+    );
+  }
+
+  // A failed request isn't the same as a company that doesn't exist - reporting
+  // "not found" for a server error sends the admin after the wrong problem.
+  if (error) {
+    return (
+      <div className="flex flex-col gap-8 px-8 py-8">
+        <ErrorState title="Failed to load company profile" className="py-32" />
       </div>
     );
   }

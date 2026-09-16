@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import Button from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { Avatar } from "@/components/ui/avatar";
 import { Rating } from "@/components/ui/rating";
 import { StatCard } from "@/components/ui/stat-card";
@@ -29,7 +30,11 @@ export default function ProfessionalsPage() {
 
   const { data: dashboardData, isLoading: isLoadingStats } =
       useProfessionalsDashboard(true);
-  const { data: professionalsData, isLoading: isLoadingProfessionals } =
+  const {
+    data: professionalsData,
+    isLoading: isLoadingProfessionals,
+    error: professionalsError,
+  } =
       useProfessionals(
           {
             search: searchInput || undefined,
@@ -170,6 +175,10 @@ export default function ProfessionalsPage() {
         {isLoadingProfessionals ? (
             <div className="bg-white border border-border-500 rounded-lg p-6">
               <LoadingSpinner message="Loading professionals..." className="py-12" />
+            </div>
+        ) : professionalsError ? (
+            <div className="bg-white border border-border-500 rounded-lg p-6">
+              <ErrorState title="Failed to load professionals" className="py-12" />
             </div>
         ) : filtered.length === 0 ? (
             <div className="bg-white border border-border-500 rounded-lg p-6">
