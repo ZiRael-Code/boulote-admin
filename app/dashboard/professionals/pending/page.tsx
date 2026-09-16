@@ -27,6 +27,11 @@ export default function PendingApprovalsPage() {
     approveMutation.mutate(id);
   };
 
+  // Scoped to the row actually being approved - the mutation state is shared,
+  // so keying the spinner off isPending alone spun every row's button at once.
+  const isApproving = (id: number) =>
+    approveMutation.isPending && approveMutation.variables === id;
+
   if (!isLoading && !hasPending) {
     return (
       <div className="flex flex-col gap-8 px-8 py-8">
@@ -80,8 +85,8 @@ export default function PendingApprovalsPage() {
           <LoadingSpinner message="Loading pending approvals..." className="py-12" />
         </div>
       ) : (
-      <div className="bg-white border border-border-500 rounded-lg overflow-hidden">
-        <table className="w-full">
+      <div className="bg-white border border-border-500 rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[900px]">
           <thead className="bg-neutral-100">
             <tr>
                 <th className="text-left px-6 py-4 text-sm font-medium text-secondary-500">
@@ -168,7 +173,7 @@ export default function PendingApprovalsPage() {
                   <Button
                     className="h-10 px-6 bg-primary-500 text-white"
                         onClick={() => handleApprove(approval.id)}
-                        loading={approveMutation.isPending}
+                        loading={isApproving(approval.id)}
                         disabled={approveMutation.isPending}
                       >
                         <span className="text-sm font-medium">Approve</span>

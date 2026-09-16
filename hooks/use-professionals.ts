@@ -37,15 +37,21 @@ export function useProfessionalProfile(id: number, enabled = true) {
   });
 }
 
+// Approving/rejecting changes a professional's status, so the main list has to
+// be refreshed too - it was previously left stale, unlike the company
+// equivalent (COMPANY_INVALIDATE_KEYS), which already included its list.
+const PROFESSIONAL_INVALIDATE_KEYS = [
+  ["professionals", "pending"],
+  ["professionals", "dashboard"],
+  ["professionals", "list"],
+];
+
 export function useRejectProfessional() {
   return useMutationWithToast({
     mutationFn: (id: number) => rejectProfessional(id),
     successMessage: "Professional rejected",
     errorMessage: "Failed to reject professional",
-    invalidateKeys: [
-      ["professionals", "pending"],
-      ["professionals", "dashboard"],
-    ],
+    invalidateKeys: PROFESSIONAL_INVALIDATE_KEYS,
   });
 }
 
@@ -75,10 +81,7 @@ export function useApproveProfessional() {
     mutationFn: (id: number) => approveProfessional(id),
     successMessage: "Professional approved successfully",
     errorMessage: "Failed to approve professional",
-    invalidateKeys: [
-      ["professionals", "pending"],
-      ["professionals", "dashboard"],
-    ],
+    invalidateKeys: PROFESSIONAL_INVALIDATE_KEYS,
   });
 }
 
