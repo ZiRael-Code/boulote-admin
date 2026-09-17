@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/navigation/sidebar";
 import { MobileHeader } from "@/components/navigation/mobile-header";
 import { AuthGuard } from "@/components/auth-guard";
@@ -11,7 +11,21 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Sidebar is a fixed-position full-screen drawer below the lg breakpoint
+  // (see sidebar.tsx), so starting it "open" meant every page loaded on a
+  // phone or tablet with the drawer and its dark overlay covering the whole
+  // screen. Start closed (matches server-rendered markup, so no hydration
+  // mismatch) and open it back up once we know we're actually on a desktop
+  // viewport.
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    setIsSidebarOpen(desktop.matches);
+    const handleChange = (e: MediaQueryListEvent) => setIsSidebarOpen(e.matches);
+    desktop.addEventListener("change", handleChange);
+    return () => desktop.removeEventListener("change", handleChange);
+  }, []);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 

@@ -57,7 +57,7 @@ function FilterDropdown({ label, value, options, onChange }: {
 function StatCards() {
   const { data, isLoading } = useCommunityDashboard();
   return (
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           { label: "Pending Reviews", value: isLoading ? "..." : data?.pendingReviews ?? 0 },
           { label: "Active Bans", value: isLoading ? "..." : data?.activeBans ?? 0 },

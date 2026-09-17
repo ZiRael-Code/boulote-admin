@@ -68,7 +68,7 @@ function IndustryFilter({ value, onChange }: { value: string; onChange: (v: stri
 function StatCards() {
   const { data, isLoading } = useMentorshipDashboard();
   return (
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           { label: "Pending Applications", value: isLoading ? "..." : data?.pendingApplications ?? 0 },
           { label: "Active Pairs",         value: isLoading ? "..." : data?.activePairs ?? 0 },
@@ -150,7 +150,7 @@ function EligibleProfessionalsTab() {
                 </span>
                     </div>
 
-                    <div className="grid grid-cols-3 border border-gray-200 rounded-md overflow-hidden mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 border border-gray-200 rounded-md overflow-hidden mb-4">
                       <div className="flex flex-col items-center py-4 gap-1 border-r border-gray-200">
                         <span className="text-sm font-semibold text-secondary-600">{pro.rating?.toFixed(1)}/5</span>
                         <StarRating rating={pro.rating} />
@@ -411,7 +411,7 @@ function RequestsTab({ onFindMentor }: { onFindMentor: (req: any) => void }) {
                 </span>
                     </div>
 
-                    <div className="grid grid-cols-4 border border-gray-200 rounded-md overflow-hidden mb-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 border border-gray-200 rounded-md overflow-hidden mb-4">
                       <div className="flex flex-col items-center py-4 gap-1 border-r border-gray-200">
                         <span className="text-sm font-semibold text-secondary-600">{req.rating?.toFixed(1)}/5</span>
                         <StarRating rating={req.rating ?? 0} />
@@ -504,7 +504,7 @@ function FindMentorView({
         ) : requirements ? (
             <div className="border border-gray-200 rounded-lg p-5 bg-gray-50/50 mb-7">
               <p className="text-sm font-semibold text-secondary-600 mb-4">Mentee Requirements</p>
-              <div className="grid grid-cols-2 gap-y-2 gap-x-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8">
                 <div className="flex flex-col gap-2">
                   {[
                     `Industry: ${requirements.industry}`,

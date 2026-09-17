@@ -96,7 +96,7 @@ export default function QuizzesPage() {
         </div>
 
         {mainTab === "library" ? (
-            <div className="flex gap-6">
+            <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex flex-col gap-6 flex-1">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-secondary-500">Quiz Library</h2>
@@ -193,7 +193,7 @@ export default function QuizzesPage() {
               </div>
 
               {selectedQuizId && (
-                  <div className="w-[500px] shrink-0">
+                  <div className="w-full lg:w-[500px] shrink-0">
                     {isLoadingSelectedQuiz ? (
                         <LoadingSpinner />
                     ) : selectedQuiz ? (

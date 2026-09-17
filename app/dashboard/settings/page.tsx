@@ -595,38 +595,39 @@ export default function AdminPlatformSettingsPage() {
             Subscription Management
           </h2>
 
-          <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
+          <div className="border border-gray-200 rounded-lg overflow-x-auto mb-4">
+            <div className="min-w-[560px]">
+              <div className="grid grid-cols-4 bg-gray-50 border-b border-gray-200">
+                {["Plan name", "Monthly price", "Status", "Actions"].map((h) => (
+                  <div key={h} className="px-6 py-3 text-sm font-medium text-secondary-500">{h}</div>
+                ))}
+              </div>
 
-            <div className="grid grid-cols-4 bg-gray-50 border-b border-gray-200">
-              {["Plan name", "Monthly price", "Status", "Actions"].map((h) => (
-                <div key={h} className="px-6 py-3 text-sm font-medium text-secondary-500">{h}</div>
-              ))}
-            </div>
-
-            {plansLoading ? (
-              <div className="px-6 py-6 text-sm text-gray-400">Loading plans...</div>
-            ) : plans.length === 0 ? (
-              <div className="px-6 py-6 text-sm text-gray-400">No subscription plans yet.</div>
-            ) : (
-              plans.map((plan, i) => (
-                <div
-                  key={plan.id}
-                  className={cn("grid grid-cols-4 items-center", i < plans.length - 1 && "border-b border-gray-200")}
-                >
-                  <div className="px-6 py-4 text-sm text-secondary-500">{plan.name}</div>
-                  <div className="px-6 py-4 text-sm text-secondary-500">{formatNaira(plan.monthlyPrice)}</div>
-                  <div className="px-6 py-4 text-sm text-secondary-500">{plan.active ? "Active" : "Inactive"}</div>
-                  <div className="px-6 py-4">
-                    <button
-                      onClick={() => handleEditPlan(plan)}
-                      className="px-4 py-1.5 border border-gray-200 text-sm text-secondary-500 rounded-md hover:bg-gray-50 transition-colors"
-                    >
-                      Edit
-                    </button>
+              {plansLoading ? (
+                <div className="px-6 py-6 text-sm text-gray-400">Loading plans...</div>
+              ) : plans.length === 0 ? (
+                <div className="px-6 py-6 text-sm text-gray-400">No subscription plans yet.</div>
+              ) : (
+                plans.map((plan, i) => (
+                  <div
+                    key={plan.id}
+                    className={cn("grid grid-cols-4 items-center", i < plans.length - 1 && "border-b border-gray-200")}
+                  >
+                    <div className="px-6 py-4 text-sm text-secondary-500">{plan.name}</div>
+                    <div className="px-6 py-4 text-sm text-secondary-500">{formatNaira(plan.monthlyPrice)}</div>
+                    <div className="px-6 py-4 text-sm text-secondary-500">{plan.active ? "Active" : "Inactive"}</div>
+                    <div className="px-6 py-4">
+                      <button
+                        onClick={() => handleEditPlan(plan)}
+                        className="px-4 py-1.5 border border-gray-200 text-sm text-secondary-500 rounded-md hover:bg-gray-50 transition-colors"
+                      >
+                        Edit
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
 
           <button

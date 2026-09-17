@@ -264,7 +264,7 @@ function AIReviewJobCard({
                             </span>
                           </h3>
 
-                          <div className="grid grid-cols-2 gap-6">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {professionals.map((shortlisted, index) => {
                               const professional = shortlisted.professional;
                               const professionalId = professional.id;

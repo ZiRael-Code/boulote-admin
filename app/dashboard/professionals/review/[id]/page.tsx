@@ -91,7 +91,7 @@ export default function ApplicationReviewPage() {
 
         <div className="bg-white border border-border-500 rounded-lg p-6 flex flex-col gap-6">
           <h3 className="text-lg font-semibold text-secondary-500">Review Checklist</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center gap-2">
               <input type="checkbox" className="w-4 h-4" readOnly checked={!!approval.name} />
               <span className="text-sm text-secondary-500">Professional Information Complete</span>
@@ -111,7 +111,7 @@ export default function ApplicationReviewPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
           <div className="flex flex-col gap-1">
             <p className="text-xs text-neutral-500 uppercase">FULL NAME</p>
             <p className="text-sm text-secondary-500">{approval.name}</p>
