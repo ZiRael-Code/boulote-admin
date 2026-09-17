@@ -18,6 +18,7 @@ import {
 import { formatDate } from "@/lib/utils/format-date";
 import { getStatusTextColor } from "@/lib/utils/status-colors";
 import { exportToCsv } from "@/lib/utils/csv-export";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import type { Professional } from "@/lib/types/professional";
 
 export default function ProfessionalsPage() {
@@ -28,6 +29,10 @@ export default function ProfessionalsPage() {
   const [selectedRating, setSelectedRating] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
 
+  // The raw input drives the textbox; the debounced copy drives the query key,
+  // so typing a name fires one request instead of one per keystroke.
+  const debouncedSearch = useDebouncedValue(searchInput);
+
   const { data: dashboardData, isLoading: isLoadingStats } =
       useProfessionalsDashboard(true);
   const {
@@ -37,7 +42,7 @@ export default function ProfessionalsPage() {
   } =
       useProfessionals(
           {
-            search: searchInput || undefined,
+            search: debouncedSearch || undefined,
             skills: selectedSkill || undefined,
             ratings: selectedRating || undefined,
             status: selectedStatus || undefined,
