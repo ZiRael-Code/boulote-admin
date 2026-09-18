@@ -37,6 +37,9 @@ type Notification = {
   priority: string | null;
   isRead: boolean;
   createdAt: string;
+  actionUrl: string | null;
+  relatedEntityType: string | null;
+  relatedEntityId: number | null;
 };
 
 type SystemActivity = {

@@ -78,6 +78,12 @@ export function Sidebar({ isOpen = true, onToggle }: SidebarProps) {
       label: "Payments",
       href: "/dashboard/payments",
       iconSize: 24,
+    },
+    {
+      icon: "/assets/icon/dashboard/people.svg",
+      label: "Support",
+      href: "/dashboard/support",
+      iconSize: 24,
     }
   ];
 

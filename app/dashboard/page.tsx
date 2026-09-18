@@ -138,15 +138,16 @@ export default function DashboardPage() {
                       title={notification.title}
                       description={notification.message}
                       badge={getNotificationBadge(notification.type)}
+                      actionUrl={notification.actionUrl}
                     />
                   ))
                 )}
               </div>
               <Link
-                href="/dashboard/notifications"
+                href="/dashboard/support"
                 className="text-base font-medium text-primary-500 hover:text-primary-600 capitalize"
               >
-                View All Notifications →
+                View Support Requests →
               </Link>
             </div>
 
