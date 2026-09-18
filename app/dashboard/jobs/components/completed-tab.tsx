@@ -25,7 +25,7 @@ const URGENCY_OPTIONS = [
   { value: "Urgent", label: "Urgent" },
 ];
 
-// No backend "completed within N days" param exists — filters the
+// No backend "completed within N days" param exists - filters the
 // completionDate of whatever's already loaded on the current page.
 const DAYS_OPTIONS = [
   { value: "7", label: "Last 7 days" },
@@ -33,7 +33,7 @@ const DAYS_OPTIONS = [
   { value: "90", label: "Last 90 days" },
 ];
 
-// Same as above — client-side over the current page, no backend rating param.
+// Same as above - client-side over the current page, no backend rating param.
 const RATING_OPTIONS = [
   { value: "4", label: "4 and above" },
   { value: "3", label: "3 to 4" },

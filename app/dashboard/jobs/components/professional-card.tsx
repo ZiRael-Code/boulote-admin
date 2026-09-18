@@ -23,7 +23,7 @@ type ProfessionalCardProps = {
   isSelected?: boolean;
   onSelect?: () => void;
   /** When set, renders the selector as a radio button scoped to this group
-   * name instead of a checkbox — use when only one professional can be
+   * name instead of a checkbox - use when only one professional can be
    * picked per job. */
   selectionGroupName?: string;
 };

@@ -29,7 +29,7 @@ const URGENCY_OPTIONS = [
   { value: "Urgent", label: "Urgent" },
 ];
 
-// "At risk" / "On track" isn't a real backend status — it's derived
+// "At risk" / "On track" isn't a real backend status - it's derived
 // client-side the same way OngoingJobCard already computes it, so this
 // filter only ever applies to jobs already loaded on the current page.
 const RISK_OPTIONS = [
@@ -58,7 +58,7 @@ export function OngoingJobsTab() {
   });
   const { data: categoryOptions } = useJobCategories();
 
-  // Professional names are only known from whatever's on the current page —
+  // Professional names are only known from whatever's on the current page -
   // there's no backend "list assigned professionals" filter to page against.
   const professionalOptions = useMemo(() => {
     const names = new Set<string>();

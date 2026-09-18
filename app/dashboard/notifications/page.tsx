@@ -2,6 +2,7 @@
 
 import {useEffect, useState} from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {ChevronLeft, Search, ChevronDown, Star, AlertTriangle, Loader2} from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -477,7 +478,7 @@ function QuestionPreviewModal({
         .finally(() => setLoading(false));
   }, [alert.relatedEntityId, isQuizSubmission]);
 
-  // Parse options — stored as JSON string in DB
+  // Parse options - stored as JSON string in DB
   let options: string[] = [];
   if (question?.options) {
     try {
@@ -607,11 +608,19 @@ function QuestionPreviewModal({
               )
           ) : (
               // Non-quiz alert preview
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <p className="text-sm font-semibold text-secondary-500">{alert.title}</p>
                 <p className="text-sm text-gray-500 leading-relaxed">{alert.message}</p>
                 {alert.actionUrl && (
-                    <p className="text-xs text-gray-400">URL: {alert.actionUrl}</p>
+                    <Link
+                        href={alert.actionUrl}
+                        onClick={onClose}
+                        className="inline-flex items-center justify-center w-full bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+                    >
+                      {alert.actionUrl.startsWith("/dashboard/support/")
+                          ? "Reply to support request"
+                          : "Go to page"}
+                    </Link>
                 )}
               </div>
           )}
@@ -817,7 +826,7 @@ function SystemAlertsTab() {
                             </span>
                         )}
 
-                        {/* Quiz approve/reject — only when not actioned */}
+                        {/* Quiz approve/reject - only when not actioned */}
                         {isQuizSubmission && !isActioned && (
                             <>
                               <button

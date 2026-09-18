@@ -56,7 +56,7 @@ export default function ProfessionalsPage() {
   const totalPages = professionalsData?.totalPages || 1;
 
   // Options are derived from whatever's currently loaded, so this list only
-  // ever shows skills that appear on the current filtered page/result set —
+  // ever shows skills that appear on the current filtered page/result set -
   // there's no dedicated "all skills" endpoint to populate it platform-wide.
   const allSkills = useMemo(() => {
     const skills = new Set<string>();

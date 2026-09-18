@@ -80,7 +80,7 @@ function AssignedJobCard({ job }: { job: Job }) {
           }`}
         >
           <span className="text-sm font-normal">
-            {isDeclined ? "Declined — needs reassignment" : "Awaiting acceptance"}
+            {isDeclined ? "Declined - needs reassignment" : "Awaiting acceptance"}
           </span>
         </div>
       </div>

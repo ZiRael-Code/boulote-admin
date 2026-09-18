@@ -128,18 +128,19 @@ export default function DashboardPage() {
               <h2 className="text-xl font-normal text-secondary-500">
                 Notifications
               </h2>
-              <div className="flex flex-col gap-10">
+              <div className="flex flex-col divide-y divide-border-500">
                 {data.notifications.length === 0 ? (
                   <p className="text-sm text-neutral-400">No unread notifications.</p>
                 ) : (
                   data.notifications.map((notification) => (
-                    <NotificationItem
-                      key={notification.id}
-                      title={notification.title}
-                      description={notification.message}
-                      badge={getNotificationBadge(notification.type)}
-                      actionUrl={notification.actionUrl}
-                    />
+                    <div key={notification.id} className="py-5 first:pt-0 last:pb-0">
+                      <NotificationItem
+                        title={notification.title}
+                        description={notification.message}
+                        badge={getNotificationBadge(notification.type)}
+                        actionUrl={notification.actionUrl}
+                      />
+                    </div>
                   ))
                 )}
               </div>
@@ -155,18 +156,19 @@ export default function DashboardPage() {
               <h2 className="text-xl font-normal text-secondary-500">
                 Recent System Activity
               </h2>
-              <div className="flex flex-col gap-10">
+              <div className="flex flex-col divide-y divide-border-500">
                 {data.systemActivities.length === 0 ? (
                   <p className="text-sm text-neutral-400">No recent activity.</p>
                 ) : (
                   data.systemActivities.map((activity, index) => (
-                    <ActivityItem
-                      key={index}
-                      title={activity.title}
-                      description={activity.message}
-                      time={activity.timeAgo}
-                      icon={getActivityIcon(activity.type)}
-                    />
+                    <div key={index} className="py-5 first:pt-0 last:pb-0">
+                      <ActivityItem
+                        title={activity.title}
+                        description={activity.message}
+                        time={activity.timeAgo}
+                        icon={getActivityIcon(activity.type)}
+                      />
+                    </div>
                   ))
                 )}
               </div>

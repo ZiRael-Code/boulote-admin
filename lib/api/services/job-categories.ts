@@ -7,7 +7,7 @@ type ProfessionWithSkills = {
 };
 
 // Job "category" filtering matches against Project.requiredSkills, which is
-// populated from this same skill catalog — flatten it into one deduped list
+// populated from this same skill catalog - flatten it into one deduped list
 // so the dropdown options actually match what's filterable server-side.
 export async function getJobCategoryOptions(): Promise<string[]> {
   const response = await axiosInstance.get<ProfessionWithSkills[]>(

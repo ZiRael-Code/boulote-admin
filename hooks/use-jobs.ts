@@ -41,7 +41,7 @@ export function usePendingJobs(enabled = true, filters: JobFilters = {}) {
   });
 }
 
-// Real skill catalog, shared across all three job tabs' category filter —
+// Real skill catalog, shared across all three job tabs' category filter -
 // stable list, so it's fine to cache for the session.
 export function useJobCategories() {
   return useQuery<string[]>({

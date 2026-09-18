@@ -88,7 +88,7 @@ export default function JobDetailPage() {
                   {m.description && <p className="text-xs text-neutral-500">{m.description}</p>}
                 </div>
                 <span className="text-xs px-2 py-1 rounded-full bg-neutral-100 text-secondary-500">
-                  {m.status?.replaceAll("_", " ") ?? "—"}
+                  {m.status?.replaceAll("_", " ") ?? "-"}
                 </span>
               </div>
             ))}
@@ -132,17 +132,17 @@ export default function JobDetailPage() {
           <p className="text-sm text-neutral-500">No payment record for this job yet.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <Field label="Status" value={job.payment.status?.replaceAll("_", " ") ?? "—"} />
+            <Field label="Status" value={job.payment.status?.replaceAll("_", " ") ?? "-"} />
             <Field
               label="Amount"
               value={
                 job.payment.amount != null
                   ? `₦${job.payment.amount.toLocaleString()}`
-                  : "—"
+                  : "-"
               }
             />
             <Field label="Paid At" value={job.payment.paidAt ? formatDate(job.payment.paidAt) : "Not yet paid"} />
-            <Field label="Reference" value={job.payment.transactionReference ?? "—"} />
+            <Field label="Reference" value={job.payment.transactionReference ?? "-"} />
           </div>
         )}
       </div>

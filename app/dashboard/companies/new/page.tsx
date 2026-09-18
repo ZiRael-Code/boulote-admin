@@ -178,7 +178,7 @@ export default function AddCompanyPage() {
                                         Hiring Purposes
                                     </h2>
                                     <p className="text-sm text-neutral-500 mt-1">
-                                        Optional — select the company's hiring intent
+                                        Optional - select the company's hiring intent
                                     </p>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -219,7 +219,7 @@ export default function AddCompanyPage() {
                                 <div className="flex justify-between text-sm">
                                     <span className="text-neutral-500">Email</span>
                                     <span className="text-secondary-500 font-medium">
-                    {email || "—"}
+                    {email || "-"}
                   </span>
                                 </div>
                                 <div className="flex justify-between text-sm">
@@ -239,15 +239,15 @@ export default function AddCompanyPage() {
                             <div className="flex flex-col gap-2 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-neutral-500">Company</span>
-                                    <span className="text-secondary-500 font-medium">{companyName || "—"}</span>
+                                    <span className="text-secondary-500 font-medium">{companyName || "-"}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-neutral-500">Type</span>
-                                    <span className="text-secondary-500 font-medium">{companyType || "—"}</span>
+                                    <span className="text-secondary-500 font-medium">{companyType || "-"}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-neutral-500">Size</span>
-                                    <span className="text-secondary-500 font-medium">{companySize || "—"}</span>
+                                    <span className="text-secondary-500 font-medium">{companySize || "-"}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-neutral-500">Purposes</span>

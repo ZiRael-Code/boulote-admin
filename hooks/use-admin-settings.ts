@@ -34,7 +34,7 @@ export function useChangePassword() {
 export function useChangeEmail() {
   return useMutationWithToast({
     mutationFn: (data: { currentPassword: string; newEmail: string }) => changeEmail(data),
-    successMessage: "Email changed successfully — use it next time you log in",
+    successMessage: "Email changed successfully - use it next time you log in",
     errorMessage: "Failed to change email",
     invalidateKeys: [],
   });

@@ -116,7 +116,7 @@ function OverviewTab({
           </div>
           <div className="flex flex-col gap-1">
             <p className="text-xs text-neutral-500 uppercase">LOCATION</p>
-            <p className="text-sm text-secondary-500">{profile.location || "—"}</p>
+            <p className="text-sm text-secondary-500">{profile.location || "-"}</p>
           </div>
           <div className="flex flex-col gap-1">
             <p className="text-xs text-neutral-500 uppercase">JOIN DATE</p>
@@ -125,7 +125,7 @@ function OverviewTab({
           <div className="flex flex-col gap-1">
             <p className="text-xs text-neutral-500 uppercase">LAST ACTIVE</p>
             <p className="text-sm text-secondary-500">
-              {profile.lastActive ? formatDate(profile.lastActive) : "—"}
+              {profile.lastActive ? formatDate(profile.lastActive) : "-"}
             </p>
           </div>
           <div className="flex flex-col gap-1">
@@ -213,7 +213,7 @@ function QuizHistoryTab({ profile, professionalId }: { profile: any; professiona
           <StatCard value={quizStats?.quizzesTaken ?? 0} label="Quiz Taken" />
           <StatCard value={`${quizStats?.averageScore ?? 0}%`} label="Average score" />
           <StatCard value={quizStats?.skillsCertified ?? 0} label="Skills certified" />
-          <StatCard value={quizStats?.skillLevel ?? "—"} label="Skill level" />
+          <StatCard value={quizStats?.skillLevel ?? "-"} label="Skill level" />
         </div>
 
         <div className="flex flex-col gap-4">
@@ -325,7 +325,7 @@ function QuizSessionDetailModal({
                           <p className="text-sm font-medium text-secondary-500">{answer.questionText}</p>
                           <div className="flex flex-col gap-1 text-sm">
                             <span className={answer.isCorrect ? "text-success-600" : "text-error-600"}>
-                              Selected: {answer.selectedAnswer || "—"}
+                              Selected: {answer.selectedAnswer || "-"}
                             </span>
                             {!answer.isCorrect && (
                                 <span className="text-neutral-500">Correct: {answer.correctAnswer}</span>

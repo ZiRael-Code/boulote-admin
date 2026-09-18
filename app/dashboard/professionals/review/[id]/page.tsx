@@ -56,7 +56,7 @@ export default function ApplicationReviewPage() {
           <div>
             <p className="text-lg font-semibold">Pending Review</p>
             <p className="text-sm text-neutral-500 mt-4">
-              Applied on {formatDate(approval.appliedDate)} — Waiting {approval.waitingDays} {pluralize(approval.waitingDays, "day")}
+              Applied on {formatDate(approval.appliedDate)} - Waiting {approval.waitingDays} {pluralize(approval.waitingDays, "day")}
             </p>
           </div>
           <div className="flex gap-3">

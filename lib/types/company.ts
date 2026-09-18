@@ -4,7 +4,7 @@ export type CompanyStatus = "Active" | "Approved" | "Pending" | "Rejected" | "De
 
 // Industry, size, and plan are admin-configurable catalog values (see
 // CompanyTypeService/CompanySizeService/PaymentPlanRepository on the backend),
-// not a fixed set — fetch real options via getCompanyFilterOptions() rather
+// not a fixed set - fetch real options via getCompanyFilterOptions() rather
 // than hardcoding a union here.
 export type Company = {
   id: number;

@@ -638,7 +638,7 @@ function OverviewTabContent({ quiz }: { quiz: QuizDetails }) {
               quiz.recentActivities.map((activity: QuizAttempt, index: number) => (
                   <div key={index} className="text-base text-neutral-500">
                     <span className="font-medium">{activity.professionalName}</span>{" "}
-                    {activity.passed ? "passed" : "failed"} — Score: {activity.score}% •{" "}
+                    {activity.passed ? "passed" : "failed"} - Score: {activity.score}% •{" "}
                     {formatRelativeTime(activity.completedAt)}
                   </div>
               ))
