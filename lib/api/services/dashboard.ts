@@ -77,7 +77,7 @@ export async function getAdminDashboard(): Promise<DashboardData> {
 export async function getAdminNotificationsPage(page = 0, size = 10) {
   const response = await axiosInstance.get<PageResponse<Notification>>(
     "/admin/dashboard/notifications",
-    { params: { page, size } }
+    { params: { unreadOnly: true, page, size } }
   );
   return response.data;
 }
