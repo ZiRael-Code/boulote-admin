@@ -1,4 +1,5 @@
 import axiosInstance from "../axios-config";
+import type { PageResponse } from "./pagination";
 
 // Mirrors the backend's NotificationType enum (see NotificationType.java).
 export type NotificationType =
@@ -29,7 +30,7 @@ export type NotificationType =
 // Mirrors the backend's SystemActivityType enum (see SystemActivityType.java).
 export type ActivityType = NotificationType | "CONTENT_FLAGGED";
 
-type Notification = {
+export type Notification = {
   id: number;
   type: NotificationType;
   title: string;
@@ -42,7 +43,7 @@ type Notification = {
   relatedEntityId: number | null;
 };
 
-type SystemActivity = {
+export type SystemActivity = {
   type: ActivityType;
   title: string;
   message: string;
@@ -71,3 +72,20 @@ export async function getAdminDashboard(): Promise<DashboardData> {
   return response.data;
 }
 
+
+
+export async function getAdminNotificationsPage(page = 0, size = 10) {
+  const response = await axiosInstance.get<PageResponse<Notification>>(
+    "/admin/dashboard/notifications",
+    { params: { page, size } }
+  );
+  return response.data;
+}
+
+export async function getAdminActivitiesPage(page = 0, size = 10) {
+  const response = await axiosInstance.get<PageResponse<SystemActivity>>(
+    "/admin/dashboard/activities",
+    { params: { page, size } }
+  );
+  return response.data;
+}

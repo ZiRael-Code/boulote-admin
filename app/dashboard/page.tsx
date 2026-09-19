@@ -1,18 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { NotificationItem } from "@/components/dashboard/notification-item";
 import { ActivityItem } from "@/components/dashboard/activity-item";
 import { getAdminDashboard } from "@/lib/api/services/dashboard";
+import { SimplePagination } from "@/components/ui/simple-pagination";
+import {
+  useAdminActivitiesPage,
+  useAdminNotificationsPage,
+} from "@/hooks/use-admin-dashboard-pages";
 import { formatLastLogin, formatPercentage } from "@/lib/utils/format-date";
+
+const PAGE_SIZE = 10;
 
 export default function DashboardPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-dashboard"],
     queryFn: getAdminDashboard,
   });
+
+  const [notificationPage, setNotificationPage] = useState(0);
+  const [activityPage, setActivityPage] = useState(0);
+  const notificationsQuery = useAdminNotificationsPage(notificationPage, PAGE_SIZE);
+  const activitiesQuery = useAdminActivitiesPage(activityPage, PAGE_SIZE);
 
   if (isLoading) {
     return (
@@ -39,6 +52,30 @@ export default function DashboardPage() {
   }
 
   if (!data) return null;
+
+  // Prefer the server-paged lists; if those endpoints are unavailable fall
+  // back to paging what the dashboard payload already carries.
+  const serverNotifications = notificationsQuery.data && !notificationsQuery.isError;
+  const notificationsShown = serverNotifications
+    ? notificationsQuery.data!.content
+    : data.notifications.slice(
+        notificationPage * PAGE_SIZE,
+        (notificationPage + 1) * PAGE_SIZE
+      );
+  const notificationsTotalPages = serverNotifications
+    ? notificationsQuery.data!.totalPages
+    : Math.ceil(data.notifications.length / PAGE_SIZE);
+
+  const serverActivities = activitiesQuery.data && !activitiesQuery.isError;
+  const activitiesShown = serverActivities
+    ? activitiesQuery.data!.content
+    : data.systemActivities.slice(
+        activityPage * PAGE_SIZE,
+        (activityPage + 1) * PAGE_SIZE
+      );
+  const activitiesTotalPages = serverActivities
+    ? activitiesQuery.data!.totalPages
+    : Math.ceil(data.systemActivities.length / PAGE_SIZE);
 
   const professionalsIcon = "/assets/icon/dashboard/professionals.svg";
   const companiesIcon = "/assets/icon/dashboard/companies.svg";
@@ -129,10 +166,10 @@ export default function DashboardPage() {
                 Notifications
               </h2>
               <div className="flex flex-col divide-y divide-border-500">
-                {data.notifications.length === 0 ? (
+                {notificationsShown.length === 0 ? (
                   <p className="text-sm text-neutral-400">No unread notifications.</p>
                 ) : (
-                  data.notifications.map((notification) => (
+                  notificationsShown.map((notification) => (
                     <div key={notification.id} className="py-5 first:pt-0 last:pb-0">
                       <NotificationItem
                         title={notification.title}
@@ -144,6 +181,12 @@ export default function DashboardPage() {
                   ))
                 )}
               </div>
+              <SimplePagination
+                page={notificationPage}
+                totalPages={notificationsTotalPages}
+                onPageChange={setNotificationPage}
+                disabled={notificationsQuery.isFetching}
+              />
               <Link
                 href="/dashboard/support"
                 className="text-base font-medium text-primary-500 hover:text-primary-600 capitalize"
@@ -157,10 +200,10 @@ export default function DashboardPage() {
                 Recent System Activity
               </h2>
               <div className="flex flex-col divide-y divide-border-500">
-                {data.systemActivities.length === 0 ? (
+                {activitiesShown.length === 0 ? (
                   <p className="text-sm text-neutral-400">No recent activity.</p>
                 ) : (
-                  data.systemActivities.map((activity, index) => (
+                  activitiesShown.map((activity, index) => (
                     <div key={index} className="py-5 first:pt-0 last:pb-0">
                       <ActivityItem
                         title={activity.title}
@@ -172,6 +215,12 @@ export default function DashboardPage() {
                   ))
                 )}
               </div>
+              <SimplePagination
+                page={activityPage}
+                totalPages={activitiesTotalPages}
+                onPageChange={setActivityPage}
+                disabled={activitiesQuery.isFetching}
+              />
             </div>
           </div>
         </div>

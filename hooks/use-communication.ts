@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {
   getCommunicationDashboard,
@@ -10,6 +10,7 @@ import {
   getMatchingProfessionals,
   sendJobInvites,
   getSystemAlerts,
+  getSystemAlertsPage,
   notifyUserForAlert,
 } from "@/lib/api/services/communication";
 
@@ -117,6 +118,19 @@ export function useSystemAlerts(
     queryKey: ["communication", "system-alerts", params],
     queryFn: () => getSystemAlerts(params),
     enabled,
+  });
+}
+
+export function useSystemAlertsPage(
+  params: { type?: string; priority?: string },
+  page: number,
+  size = 10,
+) {
+  return useQuery({
+    queryKey: ["communication", "system-alerts", "paged", params, page, size],
+    queryFn: () => getSystemAlertsPage(params, page, size),
+    placeholderData: keepPreviousData,
+    retry: false,
   });
 }
 

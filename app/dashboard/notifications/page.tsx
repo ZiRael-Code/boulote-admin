@@ -6,6 +6,7 @@ import Link from "next/link";
 import {ChevronLeft, Search, ChevronDown, Star, AlertTriangle, Loader2} from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { SimplePagination } from "@/components/ui/simple-pagination";
 import {
   useCommunicationDashboard,
   usePreviousAnnouncements,
@@ -16,6 +17,7 @@ import {
   useMatchingProfessionals,
   useSendJobInvites,
   useSystemAlerts,
+  useSystemAlertsPage,
   useNotifyUserForAlert,
 } from "@/hooks/use-communication";
 import {useQueryClient} from "@tanstack/react-query";
@@ -638,10 +640,25 @@ function SystemAlertsTab() {
   const [notifyPriority, setNotifyPriority] = useState("HIGH");
   const queryClient = useQueryClient();
 
-  const { data: alerts, isLoading } = useSystemAlerts({
+  const [alertPage, setAlertPage] = useState(0);
+  const ALERT_PAGE_SIZE = 10;
+  const alertFilters = {
     type: typeFilter || undefined,
     priority: priorityFilter || undefined,
-  });
+  };
+
+  // Server-paged list; if that endpoint is unavailable, fall back to the full
+  // list and page it here so the tab never loads more than 10 cards at a time.
+  const pagedQuery = useSystemAlertsPage(alertFilters, alertPage, ALERT_PAGE_SIZE);
+  const usePaged = !pagedQuery.isError;
+  const fullQuery = useSystemAlerts(alertFilters, pagedQuery.isError);
+  const alerts: any[] | undefined = usePaged
+    ? pagedQuery.data?.content
+    : fullQuery.data?.slice(alertPage * ALERT_PAGE_SIZE, (alertPage + 1) * ALERT_PAGE_SIZE);
+  const alertTotalPages = usePaged
+    ? pagedQuery.data?.totalPages ?? 0
+    : Math.ceil((fullQuery.data?.length ?? 0) / ALERT_PAGE_SIZE);
+  const isLoading = usePaged ? pagedQuery.isLoading : fullQuery.isLoading;
 
   const notifyMutation = useNotifyUserForAlert();
 
@@ -702,7 +719,7 @@ function SystemAlertsTab() {
           <div className="flex gap-2 flex-wrap">
             <select
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
+                onChange={(e) => { setTypeFilter(e.target.value); setAlertPage(0); }}
                 className="border border-gray-200 rounded-md px-3 py-2 text-sm text-secondary-500 bg-white"
             >
               <option value="">All Alert types</option>
@@ -714,7 +731,7 @@ function SystemAlertsTab() {
             </select>
             <select
                 value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
+                onChange={(e) => { setPriorityFilter(e.target.value); setAlertPage(0); }}
                 className="border border-gray-200 rounded-md px-3 py-2 text-sm text-secondary-500 bg-white"
             >
               <option value="">All Priority</option>
@@ -735,6 +752,7 @@ function SystemAlertsTab() {
               </p>
             </div>
         ) : (
+            <>
             <div className="flex flex-col gap-4">
               {alerts.map((alert: any) => {
                 const isUrgent = alert.type === "Payment" || alert.priority === "HIGH" || alert.priority === "CRITICAL";
@@ -887,6 +905,14 @@ function SystemAlertsTab() {
                 );
               })}
             </div>
+            <SimplePagination
+              className="mt-6"
+              page={alertPage}
+              totalPages={alertTotalPages}
+              onPageChange={setAlertPage}
+              disabled={pagedQuery.isFetching}
+            />
+          </>
         )}
       </div>
   );

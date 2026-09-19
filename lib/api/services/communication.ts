@@ -75,6 +75,23 @@ export async function getSystemAlerts(params: { type?: string; priority?: string
     return response.data;
 }
 
+export async function getSystemAlertsPage(
+    params: { type?: string; priority?: string },
+    page = 0,
+    size = 10
+) {
+    const response = await axiosInstance.get("/admin/communication/system-alerts/paged", {
+        params: { ...params, page, size },
+    });
+    return response.data as {
+        content: any[];
+        number: number;
+        size: number;
+        totalElements: number;
+        totalPages: number;
+    };
+}
+
 export async function notifyUserForAlert(alertId: number, message: string, priority: string) {
     await axiosInstance.post(`/admin/communication/system-alerts/${alertId}/notify-user`, {
         message,
