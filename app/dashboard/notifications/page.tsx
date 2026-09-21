@@ -1,7 +1,7 @@
 "use client";
 
-import {useEffect, useState} from "react";
-import { useRouter } from "next/navigation";
+import {Suspense, useEffect, useState} from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {ChevronLeft, Search, ChevronDown, Star, AlertTriangle, Loader2} from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -631,10 +631,24 @@ function QuestionPreviewModal({
   );
 }
 
-function SystemAlertsTab() {
+function SystemAlertsTab({ openQuestionId }: { openQuestionId?: number | null }) {
   const [typeFilter, setTypeFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [previewAlert, setPreviewAlert] = useState<any | null>(null);
+
+  // Opened from a "New Quiz Question Submitted" notification: show that question right away.
+  // The modal loads the question itself from relatedEntityId, so the alert list page doesn't matter.
+  useEffect(() => {
+    if (openQuestionId) {
+      setPreviewAlert({
+        id: -openQuestionId,
+        type: "QUIZ_SUBMISSION",
+        title: "New Quiz Question Submitted",
+        message: "",
+        relatedEntityId: openQuestionId,
+      });
+    }
+  }, [openQuestionId]);
   const [notifyingAlertId, setNotifyingAlertId] = useState<number | null>(null);
   const [notifyMessage, setNotifyMessage] = useState("");
   const [notifyPriority, setNotifyPriority] = useState("HIGH");
@@ -920,8 +934,21 @@ function SystemAlertsTab() {
 
 
 export default function AdminNotificationsPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminNotificationsPageInner />
+    </Suspense>
+  );
+}
+
+function AdminNotificationsPageInner() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<Tab>("announcements");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const questionParam = Number(searchParams.get("question"));
+  const [activeTab, setActiveTab] = useState<Tab>(
+    tabParam === "system-alerts" || tabParam === "job-invites" ? tabParam : "announcements"
+  );
 
   return (
       <div className="px-4 py-8 lg:pl-16 lg:pr-8 lg:py-12 bg-white min-h-screen">
@@ -940,7 +967,9 @@ export default function AdminNotificationsPage() {
 
         {activeTab === "announcements" && <AnnouncementsTab />}
         {activeTab === "job-invites"   && <JobInvitesTab />}
-        {activeTab === "system-alerts" && <SystemAlertsTab />}
+        {activeTab === "system-alerts" && (
+          <SystemAlertsTab openQuestionId={Number.isFinite(questionParam) && questionParam > 0 ? questionParam : null} />
+        )}
       </div>
   );
 }
