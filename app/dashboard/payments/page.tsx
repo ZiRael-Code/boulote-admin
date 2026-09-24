@@ -125,7 +125,17 @@ function PaymentRow({
             {tx.companyName ?? "Unknown company"} &rarr; {tx.professionalName ?? "Unknown professional"}
           </p>
         </div>
-        <StatusBadge status={tx.status} />
+        {tx.pendingSettlement ? (
+          // Same TRANSFER_FAILED status as a real failure underneath, but this
+          // is just Paystack's normal T+1 settlement delay, and StatusBadge's
+          // color map always renders TRANSFER_FAILED red - override it here so
+          // this doesn't look like the same problem as a genuine payout failure.
+          <span className="px-2 py-1 rounded text-xs font-medium bg-primary-50 text-primary-600">
+            Settling
+          </span>
+        ) : (
+          <StatusBadge status={tx.status} />
+        )}
       </div>
 
       <div className="flex gap-10 flex-wrap text-sm">
