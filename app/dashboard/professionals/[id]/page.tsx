@@ -10,8 +10,10 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ErrorState } from "@/components/ui/error-state";
 import {useProfessionalProfile, useProfessionalReviews, useQuizSessionDetail} from "@/hooks/use-professionals";
 import { formatDate } from "@/lib/utils/format-date";
-import { X } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import { useState } from "react";
+
+const SKILLS_PREVIEW_COUNT = 10;
 
 type TabType = "overview" | "quiz-history" | "activity" | "reviews";
 
@@ -107,6 +109,7 @@ function OverviewTab({
   router: ReturnType<typeof useRouter>;
   id: number;
 }) {
+  const [showAllSkills, setShowAllSkills] = useState(false);
   return (
       <div className="flex flex-col gap-8">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 text-sm">
@@ -142,12 +145,22 @@ function OverviewTab({
             <div className="flex flex-col gap-4">
               <h3 className="text-lg font-semibold text-secondary-500">Skills & Expertise</h3>
               <div className="flex flex-wrap gap-3">
-                {profile.skills.map((skill: string) => (
+                {(showAllSkills ? profile.skills : profile.skills.slice(0, SKILLS_PREVIEW_COUNT)).map((skill: string) => (
                     <span key={skill} className="px-4 py-2 bg-primary-50 rounded-full text-sm text-secondary-500">
                 {skill}
               </span>
                 ))}
               </div>
+              {profile.skills.length > SKILLS_PREVIEW_COUNT && (
+                  <button
+                      type="button"
+                      onClick={() => setShowAllSkills((v) => !v)}
+                      className="flex items-center gap-1 text-sm font-medium text-primary-500 w-fit"
+                  >
+                    {showAllSkills ? "Show less" : `Show all (${profile.skills.length})`}
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showAllSkills ? "rotate-180" : ""}`} />
+                  </button>
+              )}
             </div>
         )}
 
